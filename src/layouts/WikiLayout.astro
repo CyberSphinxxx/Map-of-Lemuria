@@ -1,0 +1,196 @@
+---
+import '../styles/global.css';
+import LorekeeperChat from '../components/LorekeeperChat.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Discover the secrets of Lemuria." } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Map of Lemuria</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <div class="layout-wrapper">
+      <aside class="sidebar glass-card">
+        <div class="logo-section">
+          <h1 class="logo">LEMURIA</h1>
+          <p class="tagline">World Lore Wiki</p>
+        </div>
+        
+        <nav class="main-nav">
+          <ul class="nav-list">
+            <li><a href="/" class="nav-link">Overview</a></li>
+            <li><a href="/wiki/locations" class="nav-link">Locations</a></li>
+            <li><a href="/wiki/mobs" class="nav-link">Bestiary</a></li>
+            <li><a href="/wiki/characters" class="nav-link">Characters</a></li>
+            <li class="nav-divider"></li>
+            <li><a href="/creator-dashboard" class="nav-link admin-link">The Entity Forge</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="content-area">
+        <header class="content-header">
+          <h2 class="page-title">{title}</h2>
+          <div class="header-actions">
+            <!-- Search bar could go here -->
+            <div class="search-placeholder">
+              <span class="search-icon">🔍</span>
+              <span>Search archives...</span>
+              <span class="search-shortcut">⌘K</span>
+            </div>
+          </div>
+        </header>
+
+        <section class="page-content">
+          <slot />
+        </section>
+      </main>
+    </div>
+
+    <LorekeeperChat />
+
+    <style>
+      .layout-wrapper {
+        display: flex;
+        min-height: 100vh;
+        padding: 1.5rem;
+        gap: 1.5rem;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+
+      .sidebar {
+        width: 280px;
+        height: calc(100vh - 3rem);
+        position: sticky;
+        top: 1.5rem;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+
+      .logo-section {
+        margin-bottom: 3rem;
+      }
+
+      .logo {
+        font-size: 2rem;
+        color: var(--accent-primary);
+        letter-spacing: 0.1em;
+        margin-bottom: 0.25rem;
+      }
+
+      .tagline {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+      }
+
+      .nav-list {
+        list-style: none;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin: 0.25rem -1rem;
+        border-radius: 8px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        transition: var(--transition-smooth);
+      }
+
+      .nav-link:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        padding-left: 1.5rem;
+      }
+
+      .admin-link {
+        color: var(--accent-primary);
+        margin-top: 1rem;
+      }
+
+      .nav-divider {
+        height: 1px;
+        background: var(--glass-border);
+        margin: 1.5rem 0;
+      }
+
+      .content-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+        background: linear-gradient(to right, var(--text-primary), var(--text-tertiary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .search-placeholder {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--bg-secondary);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--glass-border);
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-width: 250px;
+      }
+
+      .search-shortcut {
+        margin-left: auto;
+        font-size: 0.75rem;
+        background: var(--bg-tertiary);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid var(--glass-border);
+      }
+
+      .page-content {
+        line-height: 1.8;
+      }
+
+      @media (max-width: 1024px) {
+        .layout-wrapper {
+          flex-direction: column;
+        }
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+          top: 0;
+        }
+      }
+    </style>
+  </body>
+</html>
