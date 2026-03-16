@@ -1,0 +1,72 @@
+---
+interface Props {
+  author?: string;
+  source?: string;
+  class?: string;
+}
+
+const { author, source, class: className } = Astro.props;
+---
+
+<blockquote class:list={['lore-quote', className]}>
+  <div class="quote-content">
+    <slot />
+  </div>
+  {(author || source) && (
+    <footer class="quote-footer">
+      {author && <span class="author">— {author}</span>}
+      {source && <span class="source">, {source}</span>}
+    </footer>
+  )}
+</blockquote>
+
+<style>
+  .lore-quote {
+    position: relative;
+    margin: 2rem 0;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border-left: 4px solid var(--accent-primary);
+    border-radius: 4px 12px 12px 4px;
+    font-style: italic;
+    color: var(--text-primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .lore-quote::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 5rem;
+    font-family: serif;
+    color: var(--accent-primary);
+    opacity: 0.1;
+    line-height: 1;
+  }
+
+  .quote-content {
+    position: relative;
+    z-index: 1;
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .quote-footer {
+    margin-top: 1.5rem;
+    font-style: normal;
+    text-align: right;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+  }
+
+  .author {
+    font-weight: 600;
+    color: var(--accent-primary);
+  }
+
+  .source {
+    opacity: 0.7;
+  }
+</style>
