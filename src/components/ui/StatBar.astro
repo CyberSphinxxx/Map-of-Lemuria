@@ -1,0 +1,102 @@
+---
+interface Props {
+  label: string;
+  current: number;
+  max: number;
+  color?: string; // Optional custom color
+  class?: string;
+}
+
+const { label, current, max, color = 'var(--accent-primary)', class: className } = Astro.props;
+const percentage = Math.min(Math.max((current / max) * 100, 0), 100);
+---
+
+<div class:list={['stat-container', className]}>
+  <div class="stat-info">
+    <span class="stat-label">{label}</span>
+    <span class="stat-values">
+      <span class="current">{current}</span>
+      <span class="separator">/</span>
+      <span class="max">{max}</span>
+    </span>
+  </div>
+  <div class="stat-bar-bg">
+    <div 
+      class="stat-bar-fill" 
+      style={`width: ${percentage}%; background: linear-gradient(90deg, ${color}, var(--accent-secondary));`}
+    >
+      <div class="stat-bar-glow"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .stat-container {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .stat-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .stat-label {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+  }
+
+  .stat-values {
+    font-family: var(--font-display);
+  }
+
+  .current {
+    color: var(--text-primary);
+  }
+
+  .separator {
+    color: var(--text-tertiary);
+    margin: 0 0.1rem;
+  }
+
+  .max {
+    color: var(--text-secondary);
+  }
+
+  .stat-bar-bg {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--glass-border);
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .stat-bar-glow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(500%); }
+  }
+</style>
