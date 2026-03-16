@@ -1,0 +1,65 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'accent' | 'outline';
+  class?: string;
+}
+
+const { variant = 'primary', class: className } = Astro.props;
+
+const variants = {
+  primary: 'bg-zinc-800 text-zinc-100 border-zinc-700',
+  secondary: 'bg-zinc-900 text-zinc-400 border-zinc-800',
+  accent: 'bg-violet-900/30 text-violet-300 border-violet-500/30',
+  outline: 'bg-transparent text-zinc-300 border-zinc-700',
+};
+
+// Since I'm using vanilla CSS, I'll translate these to classes or use inline styles if needed.
+// But I'll use CSS classes for better maintainability.
+---
+
+<span class:list={['badge', variant, className]}>
+  <slot />
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    border: 1px solid transparent;
+    transition: var(--transition-smooth);
+    white-space: nowrap;
+  }
+
+  .primary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .secondary {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  .accent {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-primary);
+    border-color: rgba(139, 92, 246, 0.2);
+  }
+
+  .outline {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+  }
+
+  .badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+</style>
