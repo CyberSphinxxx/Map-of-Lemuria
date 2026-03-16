@@ -1,0 +1,249 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import Badge from '../../components/ui/Badge.astro';
+import StatBar from '../../components/ui/StatBar.astro';
+import OptimizedImage from '../../components/ui/OptimizedImage.astro';
+import LoreQuote from '../../components/ui/LoreQuote.astro';
+import { db } from '../../lib/firebase-admin';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/404');
+}
+
+// Try to find the document in any of the collections
+const collections = ['mobs', 'characters', 'locations'];
+let entityData: any = null;
+let entityType = '';
+
+for (const col of collections) {
+  const docRef = db.collection(col).doc(id);
+  const doc = await docRef.get();
+  if (doc.exists) {
+    entityData = doc.data();
+    entityType = col.slice(0, -1); // 'mob', 'character', 'location'
+    break;
+  }
+}
+
+if (!entityData) {
+  return Astro.redirect('/404');
+}
+---
+
+<WikiLayout title={entityData.name}>
+  <div class="entity-page">
+    <div class="entity-header">
+      <div class="header-main">
+        <h1 class="entity-name">{entityData.name}</h1>
+        {entityData.titles && <p class="entity-titles">{entityData.titles}</p>}
+        <div class="entity-tags">
+          <Badge variant="accent">{entityType.toUpperCase()}</Badge>
+          {entityData.tags && entityData.tags.map((tag: string) => (
+            <Badge variant="secondary">{tag}</Badge>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="entity-grid">
+      <div class="lore-column">
+        <section class="lore-section">
+          <h3 class="section-title">Archives</h3>
+          <div class="lore-content">
+            {entityData.loreDescription.split('\n\n').map((paragraph: string) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
+        </section>
+
+        {entityData.dropTable && (
+          <LoreQuote author="Ancient Records" source="Bestiary">
+            {entityData.dropTable}
+          </LoreQuote>
+        )}
+      </div>
+
+      <aside class="meta-column">
+        {entityData.imageUrl && (
+          <OptimizedImage 
+            src={entityData.imageUrl} 
+            alt={entityData.name} 
+            aspectRatio="aspect-portrait" 
+            class="entity-main-image"
+          />
+        )}
+
+        {entityType === 'mob' && entityData.baseStats && (
+          <div class="meta-box glass-card">
+            <h4 class="meta-title">Combat Attributes</h4>
+            <div class="stats-list">
+              <StatBar label="Health" current={entityData.baseStats.hp} max={1000} />
+              <Badge variant="outline">THREAT: {entityData.threatTier?.toUpperCase()}</Badge>
+            </div>
+          </div>
+        )}
+
+        {entityType === 'location' && entityData.mapCoordinates && (
+          <div class="meta-box glass-card">
+            <h4 class="meta-title">Cartography</h4>
+            <div class="coord-info">
+              <p>X-AXIS: {entityData.mapCoordinates.x}</p>
+              <p>Y-AXIS: {entityData.mapCoordinates.y}</p>
+            </div>
+            <div class="map-preview-placeholder">
+              <span>Coordinate Lock Established</span>
+            </div>
+          </div>
+        )}
+
+        {entityData.locationId && (
+          <div class="meta-box glass-card">
+            <h4 class="meta-title">Found In</h4>
+            <a href={`/wiki/${entityData.locationId}`} class="location-link">
+              Region Access Record
+            </a>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+</WikiLayout>
+
+<style>
+  .entity-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .entity-header {
+    margin-bottom: 2rem;
+  }
+
+  .entity-name {
+    font-size: 3.5rem;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .entity-titles {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-display);
+    font-style: italic;
+  }
+
+  .entity-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .entity-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 3rem;
+  }
+
+  .lore-content {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+  }
+
+  .lore-content p {
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  .meta-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .entity-main-image {
+    width: 100%;
+    margin-bottom: 1rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .meta-box {
+    padding: 1.5rem;
+  }
+
+  .meta-title {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  .stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .coord-info {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+
+  .map-preview-placeholder {
+    height: 100px;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .location-link {
+    display: block;
+    padding: 0.75rem;
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-primary);
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+  }
+
+  .location-link:hover {
+    background: var(--accent-primary);
+    color: white;
+  }
+
+  @media (max-width: 1024px) {
+    .entity-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
