@@ -1,0 +1,288 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import ProseWrapper from '../../components/ui/ProseWrapper.astro';
+import LoreQuote from '../../components/ui/LoreQuote.astro';
+import OptimizedImage from '../../components/ui/OptimizedImage.astro';
+import Badge from '../../components/ui/Badge.astro';
+import type { CharacterEntity } from '../../lib/types';
+import { db } from '../../lib/firebase-admin';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/404');
+}
+
+// 1. Fetch Character Data
+const doc = await db.collection('characters').doc(id).get();
+
+if (!doc.exists) {
+  return Astro.redirect('/404');
+}
+
+const char = { id: doc.id, ...doc.data() } as CharacterEntity;
+
+// Normalize tags
+const tagArray = typeof char.tags === 'string' 
+  ? char.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+  : (Array.isArray(char.tags) ? char.tags : []);
+
+
+// 2. Fetch Location Info
+let locationName = "Unknown Region";
+if (char.locationId) {
+  const locDoc = await db.collection('locations').doc(char.locationId).get();
+  if (locDoc.exists) {
+    locationName = locDoc.data()?.name || locationName;
+  }
+}
+
+// 3. Stats for Attribute Grid
+const stats = char.baseStats || {
+  Strength: 50,
+  Agility: 50,
+  Intelligence: 50,
+  Willpower: 50,
+  Charisma: 50
+};
+---
+
+<WikiLayout title={char.name || 'Unknown Inhabitant'} category="Characters" description={char.loreDescription?.substring(0, 160)}>
+  <div class="character-detail">
+    <div class="main-content">
+      <!-- Biography Section -->
+      <section class="bio-section">
+        <div class="section-label">Historical Records</div>
+        <ProseWrapper>
+          {char.loreDescription ? (
+            char.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
+          ) : (
+            <p>The biography of this inhabitant remains unrecorded in the ancient archives.</p>
+          )}
+        </ProseWrapper>
+      </section>
+
+      <!-- Signature Quote -->
+      {char.titles && (
+        <LoreQuote author={char.name} source="Verbal Records">
+          "The weight of my titles is nothing compared to the weight of our history."
+        </LoreQuote>
+      )}
+    </div>
+
+    <!-- Fandom-style Sticky Aside -->
+    <aside class="infobox-column">
+      <div class="infobox glass-card">
+        <div class="infobox-header">
+          <h2 class="infobox-name">{char.name}</h2>
+          <p class="infobox-title">{char.titles || 'Notable Inhabitant'}</p>
+        </div>
+
+        {char.imageUrl && (
+          <div class="infobox-image">
+            <OptimizedImage src={char.imageUrl || ''} alt={char.name || 'Character Image'} aspectRatio="aspect-portrait" />
+          </div>
+        )}
+
+        <div class="infobox-sections">
+          <div class="info-group">
+            <h4 class="info-label">Affiliations</h4>
+            <div class="tags">
+              {tagArray.map((tag: string) => (
+                <Badge variant="secondary">{tag}</Badge>
+              ))}
+            </div>
+          </div>
+
+          <div class="info-group">
+            <h4 class="info-label">Current Location</h4>
+            <a href={char.locationId ? `/world/${char.locationId}` : '#'} class="loc-link">
+              {locationName}
+            </a>
+          </div>
+
+          {(char.faction || char.status) && (
+            <div class="info-group">
+              <h4 class="info-label">Realm Information</h4>
+              <div class="meta-list">
+                {char.faction && <p class="meta-item"><strong>FACTION:</strong> {char.faction}</p>}
+                {char.status && <p class="meta-item"><strong>STATUS:</strong> {char.status.toUpperCase()}</p>}
+              </div>
+            </div>
+          )}
+
+          <div class="info-group">
+            <h4 class="info-label">Attributes</h4>
+            <div class="attribute-grid">
+              {Object.entries(stats).map(([key, value]) => (
+                <div class="attr-item">
+                  <span class="attr-key">{key.toUpperCase()}</span>
+                  <div class="attr-val-bar">
+                    <div class="attr-fill" style={`width: ${value}%`}></div>
+                    <span class="attr-num">{value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</WikiLayout>
+
+<style>
+  .character-detail {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  /* Infobox / Fandom-style aside */
+  .infobox-column {
+    position: sticky;
+    top: calc(var(--nav-height) + 2rem);
+  }
+
+  .infobox {
+    padding: 0;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(15, 12, 26, 0.8);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+  }
+
+  .infobox-header {
+    background: linear-gradient(rgba(139, 92, 246, 0.2), transparent);
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .infobox-name {
+    font-size: 1.75rem;
+    font-family: var(--font-display);
+    margin-bottom: 0.25rem;
+  }
+
+  .infobox-title {
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+
+  .infobox-image {
+    width: 100%;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .infobox-sections {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .info-label {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .loc-link {
+    display: block;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+
+  .loc-link:hover {
+    color: var(--accent-primary);
+  }
+
+  /* Attribute Grid */
+  .attribute-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .attr-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .attr-key {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    font-weight: 600;
+  }
+
+  .attr-val-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .attr-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+  }
+
+  .attr-num {
+    position: absolute;
+    right: 0;
+    top: -1.2rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 1100px) {
+    .character-detail {
+      grid-template-columns: 1fr;
+    }
+    .infobox-column {
+      order: -1;
+      position: relative;
+      top: 0;
+      margin-bottom: 3rem;
+    }
+  }
+</style>
