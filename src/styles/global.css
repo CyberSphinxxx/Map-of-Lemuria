@@ -1,26 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --bg-primary: #0a0a0c;
-  --bg-secondary: #141417;
-  --bg-tertiary: #1c1c21;
+  /* Royal Archive Palette */
+  --bg-primary: #0f0e0c;   /* Dark Onyx */
+  --bg-secondary: #1a1814; /* Deep Slate */
+  --bg-tertiary: #2a261f;  /* Weathered Stone */
   
-  --text-primary: #f0f0f2;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #71717a;
+  --text-primary: #e6e1d6;   /* Aged Paper */
+  --text-secondary: #b5ac9a; /* Dust */
+  --text-tertiary: #7d7565;  /* Shadow */
   
-  --accent-primary: #8b5cf6; /* Violet-500 */
-  --accent-secondary: #7c3aed; /* Violet-600 */
-  --accent-glow: rgba(139, 92, 246, 0.3);
+  --accent-primary: #d4af37;   /* Metallic Gold */
+  --accent-secondary: #996515; /* Golden Brown */
+  --accent-glow: rgba(212, 175, 55, 0.15);
   
-  --border-color: #27272a;
-  --glass-bg: rgba(20, 20, 23, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  --parchment: #f4ecd8;
+  --border-color: #3d3522;
+  --glass-bg: rgba(26, 24, 20, 0.85);
+  --glass-border: rgba(212, 175, 55, 0.1);
   
-  --font-main: 'Inter', sans-serif;
-  --font-display: 'Outfit', sans-serif;
+  --font-main: 'Lora', serif;
+  --font-display: 'Cinzel', serif;
   
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 * {
@@ -51,16 +53,91 @@ a {
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(212, 175, 55, 0.05);
+  pointer-events: none;
+  margin: 1px;
 }
 
 .glow-hover:hover {
-  box-shadow: 0 0 20px var(--accent-glow);
+  box-shadow: 0 0 30px var(--accent-glow);
   border-color: var(--accent-primary);
+  background: rgba(212, 175, 55, 0.02);
 }
 
+.glow-text {
+  color: var(--accent-primary);
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+
+/* Button & Input System */
+.btn-primary, .btn-secondary, .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  border: 1px solid transparent;
+  gap: 0.75rem;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+.btn-primary:hover {
+  background: #f1c40f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(212, 175, 55, 0.05);
+  color: var(--accent-primary);
+  border-color: var(--accent-glow);
+}
+
+.btn-secondary:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.btn-outline:hover {
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* File Input Styling */
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -77,4 +154,40 @@ a {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
+}
+
+input[type="file"]::file-selector-button {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 2px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--border-color);
+  border-color: var(--text-tertiary);
+}
+
+input, select, textarea {
+  background: #151310;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  padding: 0.8rem 1.2rem;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 1rem;
+  transition: var(--transition-smooth);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 15px var(--accent-glow);
 }
