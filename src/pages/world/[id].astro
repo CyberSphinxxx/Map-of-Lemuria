@@ -1,0 +1,176 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import ProseWrapper from '../../components/ui/ProseWrapper.astro';
+import LoreCard from '../../components/ui/LoreCard.astro';
+import OptimizedImage from '../../components/ui/OptimizedImage.astro';
+import { db } from '../../lib/firebase-admin';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/404');
+}
+
+// 1. Fetch Location Data
+const doc = await db.collection('locations').doc(id).get();
+
+if (!doc.exists) {
+  return Astro.redirect('/404');
+}
+
+const region = { id: doc.id, ...doc.data() } as any;
+
+// 2. Fetch Related Mobs
+const mobsSnapshot = await db.collection('mobs').where('locationId', '==', id).get();
+const relatedMobs = mobsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+// 3. Fetch Related Characters
+const charsSnapshot = await db.collection('characters').where('locationId', '==', id).get();
+const relatedChars = charsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+const allInhabitants = [
+  ...relatedMobs.map(m => ({ ...m, type: 'mob' as const } as any)),
+  ...relatedChars.map(c => ({ ...c, type: 'character' as const } as any))
+];
+---
+
+<WikiLayout title={region.name} category="World" description={region.loreDescription?.substring(0, 160)}>
+  <div class="region-detail">
+    <!-- Regional Image/Banner -->
+    {region.imageUrl && (
+      <div class="region-banner glass-card">
+        <OptimizedImage src={region.imageUrl} alt={region.name} aspectRatio="aspect-video" />
+        <div class="banner-overlay">
+          <div class="coordinate-tag">
+            <span>EASTING: {region.mapCoordinates?.x ?? '??'}</span>
+            <span>NORTHING: {region.mapCoordinates?.y ?? '??'}</span>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <div class="detail-grid">
+      <!-- Lore & Description -->
+      <section class="lore-column">
+        <div class="section-label">Environmental Records</div>
+        <ProseWrapper>
+          {region.loreDescription ? (
+            region.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
+          ) : (
+            <p>No environmental archives have been recorded for this region yet.</p>
+          )}
+        </ProseWrapper>
+      </section>
+
+      <!-- Geographic Inhabitants -->
+      <aside class="relations-column">
+        <div class="section-label">Regional Inhabitants</div>
+        
+        {allInhabitants.length > 0 ? (
+          <div class="inhabitant-list">
+            {allInhabitants.map(entity => (
+              <LoreCard 
+                id={entity.id}
+                //@ts-ignore
+                type={entity.type}
+                name={entity.name}
+                description={entity.loreDescription || ''}
+                imageUrl={entity.imageUrl}
+                tags={entity.tags}
+              />
+            ))}
+          </div>
+        ) : (
+          <div class="empty-relations glass-card">
+            <p>No inhabitants have been recorded in this region.</p>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+</WikiLayout>
+
+<style>
+  .region-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+
+  .region-banner {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+  }
+
+  .banner-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 2rem;
+    background: linear-gradient(transparent, rgba(15, 12, 26, 0.9));
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .coordinate-tag {
+    display: flex;
+    gap: 1.5rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+    background: rgba(139, 92, 246, 0.1);
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 5rem;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  .inhabitant-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .empty-relations {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 1280px) {
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+    .relations-column {
+      order: 2;
+    }
+  }
+</style>
