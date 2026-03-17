@@ -1,0 +1,139 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import ProseWrapper from '../../components/ui/ProseWrapper.astro';
+import LoreQuote from '../../components/ui/LoreQuote.astro';
+import { db } from '../../lib/firebase-admin';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/404');
+}
+
+// 1. Fetch Rule/System Data
+const doc = await db.collection('rules').doc(id).get();
+
+let rule: any;
+
+if (doc.exists) {
+  rule = { id: doc.id, ...doc.data() };
+} else {
+  // Fallback for default systems
+  const fallbacks: Record<string, any> = {
+    magic: {
+      name: 'The Weave of Mana',
+      category: 'Energy Systems',
+      description: 'Magic in Lemuria is not a gift, but a fundamental property of matter. The "Weave" represents the sub-atomic strings of mana that bind reality together. Channeling involves vibrating these strings at specific frequencies to manifest physical effects.\n\n### The Three Circles\n1. **Internal Focus**: Manipulating one\'s own life force.\n2. **Environmental Resonance**: Drawing power from the ambient world.\n3. **Celestial Alignment**: Tapping into the orbital planes.'
+    },
+    cosmology: {
+      name: 'The Seven Planes',
+      category: 'Existence',
+      description: 'The world of Lemuria exists at the intersection of seven distinct planes of reality. These planes are stacked like layers of a crystal, each vibrating at a different spiritual frequency.\n\n### The Prime Material\nThis is the stable center where life flourishes. Surrounding it are the Elemental, Spectral, and Void planes.'
+    },
+    timelines: {
+      name: 'The Chronos Anchor',
+      category: 'Time & Space',
+      description: 'Time is not a linear river but a series of interconnected anchors. Each major event creates a permanent ripple in the chronosphere. Travelers can move between these anchors if they possess the correct resonance.'
+    }
+  };
+
+  rule = fallbacks[id];
+}
+
+if (!rule) {
+  return Astro.redirect('/404');
+}
+---
+
+<WikiLayout title={rule.name} category="Rules" description={rule.description?.substring(0, 160)}>
+  <div class="rule-detail">
+    <div class="prose-container">
+      <header class="rule-header">
+        <div class="rule-badge">{rule.category || 'System Protocol'}</div>
+        <h1 class="glow-text">{rule.name}</h1>
+      </header>
+
+      <section class="rule-content">
+        <ProseWrapper>
+          <LoreQuote author="Ancient Scholars" source={`Archives of ${rule.name}`}>
+            "Understand the law, and you shall command the realm."
+          </LoreQuote>
+          
+          {rule.description ? (
+            rule.description.split('\n\n').map((p: string) => {
+              if (p.startsWith('###')) {
+                return <h3>{p.replace('###', '').trim()}</h3>;
+              }
+              if (p.startsWith('##')) {
+                return <h2>{p.replace('##', '').trim()}</h2>;
+              }
+              return <p>{p}</p>;
+            })
+          ) : (
+            <p>The technical documentation for this system is currently being transcribed.</p>
+          )}
+        </ProseWrapper>
+      </section>
+
+      <footer class="rule-footer">
+        <hr />
+        <div class="footer-meta">
+          <span>CLASSIFICATION: Universal System</span>
+          <span>RELIABILITY: Verified Archive</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+</WikiLayout>
+
+<style>
+  .rule-detail {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-bottom: 6rem;
+  }
+
+  .rule-header {
+    margin-bottom: 4rem;
+    text-align: center;
+  }
+
+  .rule-badge {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 100px;
+    font-size: 0.7rem;
+    color: var(--accent-primary);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  .rule-header h1 {
+    font-size: 3.5rem;
+    margin: 0;
+  }
+
+  .rule-footer {
+    margin-top: 6rem;
+  }
+
+  .footer-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 768px) {
+    .rule-header h1 {
+      font-size: 2.5rem;
+    }
+  }
+</style>
