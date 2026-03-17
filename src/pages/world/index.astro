@@ -1,0 +1,155 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import LoreCard from '../../components/ui/LoreCard.astro';
+import { db } from '../../lib/firebase-admin';
+
+import MapCanvas from '../../components/MapCanvas';
+
+// Fetch all regions (locations)
+const snapshot = await db.collection('locations').get();
+const regions = snapshot.docs.map(doc => ({
+  id: doc.id,
+  type: 'location',
+  ...doc.data()
+}));
+
+---
+
+<WikiLayout title="Territories of the Realm" category="World">
+  <div class="world-hub">
+    <!-- Map Section -->
+    <section class="map-section glass-card">
+      <MapCanvas client:load />
+    </section>
+
+    <!-- Regions Grid -->
+    <section class="regions-section">
+      <div class="section-header">
+        <h2 class="glow-text">Charted Territories</h2>
+        <p>Explore the diverse environments and continents of the realm.</p>
+      </div>
+
+      <div class="regions-grid">
+        {regions.length > 0 ? (
+          regions.map(region => (
+            //@ts-ignore
+            <LoreCard 
+              id={region.id}
+              type="location"
+              name={region.name}
+              description={region.loreDescription || ''}
+              imageUrl={region.imageUrl}
+              tags={region.tags}
+            />
+          ))
+        ) : (
+          <div class="empty-state glass-card">
+            <p>No regions have been charted in the archives yet.</p>
+            <a href="/creator-dashboard" class="btn-primary">Chart First Region</a>
+          </div>
+        )}
+      </div>
+    </section>
+  </div>
+</WikiLayout>
+
+<style>
+  .world-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+
+  /* Map Section Styling */
+  .map-section {
+    width: 100%;
+    height: 450px;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--glass-border);
+    transition: var(--transition-smooth);
+  }
+
+  .map-section:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+
+  .map-placeholder {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #1a1814 0%, #0f0e0c 100%);
+    background-image: 
+      linear-gradient(rgba(212, 175, 55, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212, 175, 55, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .map-overlay {
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .map-overlay .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    filter: drop-shadow(0 0 10px var(--accent-primary));
+  }
+
+  .map-overlay h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .map-overlay p {
+    font-size: 0.9rem;
+    color: var(--text-tertiary);
+  }
+
+  /* Regions Section Styling */
+  .regions-section {
+    padding-bottom: 4rem;
+  }
+
+  .section-header {
+    margin-bottom: 3rem;
+  }
+
+  .section-header h2 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-header p {
+    color: var(--text-secondary);
+  }
+
+  .regions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .empty-state p {
+    color: var(--text-tertiary);
+    font-size: 1.1rem;
+  }
+</style>
