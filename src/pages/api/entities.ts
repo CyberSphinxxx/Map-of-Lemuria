@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 // Zod schemas for validation
 const EntitySchema = z.object({
-  type: z.enum(['mob', 'character', 'location'] as const),
+  type: z.enum(['mob', 'character', 'location', 'artifact'] as const),
   name: z.string().min(1),
   titles: z.string().optional(),
   tags: z.string().optional(),
@@ -21,6 +21,13 @@ const EntitySchema = z.object({
     x: z.number(),
     y: z.number(),
   }).optional(),
+  // Character specific
+  faction: z.string().optional(),
+  status: z.enum(['active', 'mia', 'deceased', 'unknown'] as const).optional(),
+  // Artifact specific
+  rarity: z.enum(['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] as const).optional(),
+  origin: z.string().optional(),
+  material: z.string().optional(),
   // Relationship
   locationId: z.string().optional(),
 });
@@ -29,38 +36,42 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
     
-    // Extract file
+    // 1. Extract and Validate JSON data FIRST (Fail fast before upload)
+    const rawData = formData.get('data') as string;
+    if (!rawData) throw new Error('Missing entity data');
+    
+    const entityData = JSON.parse(rawData);
+    const validatedData = EntitySchema.parse(entityData);
+
+    // 2. Handle image with size limits
     const imageFile = formData.get('image') as File | null;
     let imageUrl = '';
 
     if (imageFile && imageFile.size > 0) {
+      // Limit to 5MB
+      if (imageFile.size > 5 * 1024 * 1024) {
+        throw new Error('Image size exceeds 5MB limit');
+      }
+
       const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const fileName = `entities/${Date.now()}-${imageFile.name}`;
+      const fileName = `entities/${Date.now()}-${imageFile.name.replace(/\s+/g, '_')}`;
       imageUrl = await uploadToBlob(buffer, fileName, imageFile.type);
     }
 
-    // Extract JSON data
-    const rawData = formData.get('data') as string;
-    const entityData = JSON.parse(rawData);
-    
-    // Validate
-    const validatedData = EntitySchema.parse(entityData);
-
-    // Prepare Firestore document
+    // 3. Prepare Firestore document
     const docData = {
       ...validatedData,
       imageUrl,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      // Ensure tags are split into an array
       tags: validatedData.tags ? validatedData.tags.split(',').map(t => t.trim()) : [],
     };
 
-    // Save to Firestore
+    // 4. Save to Firestore
     const collectionName = `${validatedData.type}s`;
     const docRef = await db.collection(collectionName).add(docData);
 
-    // AI/RAG Integration: Embed and Upsert to Pinecone
+    // 5. AI/RAG Integration (Non-blocking)
     try {
       const embedding = await generateEmbedding(validatedData.loreDescription);
       await upsertLoreVector(docRef.id, embedding, {
@@ -69,8 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
         content: validatedData.loreDescription,
       });
     } catch (pcError) {
-      console.error('Failed to upsert to Pinecone:', pcError);
-      // We don't fail the request if RAG fails, but we log it.
+      console.warn('[RAG] Background upsert failed:', pcError);
     }
 
     return new Response(JSON.stringify({ 
@@ -83,12 +93,13 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   } catch (error: any) {
-    console.error('Error creating entity:', error);
+    console.error('[API Entities] Error:', error);
+    const status = error instanceof z.ZodError ? 400 : 500;
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message || 'Failed to create entity' 
+      error: error.message || 'An unexpected error occurred' 
     }), {
-      status: 400,
+      status: status,
       headers: { 'Content-Type': 'application/json' }
     });
   }
