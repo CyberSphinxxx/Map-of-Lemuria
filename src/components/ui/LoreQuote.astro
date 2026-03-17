@@ -24,13 +24,14 @@ const { author, source, class: className } = Astro.props;
   .lore-quote {
     position: relative;
     margin: 2rem 0;
-    padding: 2rem;
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    padding: 2.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-left: 4px solid var(--accent-primary);
-    border-radius: 4px 12px 12px 4px;
+    border-radius: 2px;
     font-style: italic;
     color: var(--text-primary);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   }
 
   .lore-quote::before {
