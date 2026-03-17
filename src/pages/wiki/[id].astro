@@ -13,7 +13,7 @@ if (!id) {
 }
 
 // Try to find the document in any of the collections
-const collections = ['mobs', 'characters', 'locations'];
+const collections = ['mobs', 'characters', 'locations', 'items'];
 let entityData: any = null;
 let entityType = '';
 
@@ -22,7 +22,7 @@ for (const col of collections) {
   const doc = await docRef.get();
   if (doc.exists) {
     entityData = doc.data();
-    entityType = col.slice(0, -1); // 'mob', 'character', 'location'
+    entityType = col === 'items' ? 'artifact' : col.slice(0, -1);
     break;
   }
 }
@@ -30,9 +30,28 @@ for (const col of collections) {
 if (!entityData) {
   return Astro.redirect('/404');
 }
+
+// Process tags consistently
+const tagArray = typeof entityData.tags === 'string' 
+  ? entityData.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+  : (Array.isArray(entityData.tags) ? entityData.tags : []);
+
+// Fetch related lore semantically
+const siteUrl = Astro.url.origin;
+let relatedLore = [];
+try {
+  const queryTags = tagArray.join(' ');
+  const searchRes = await fetch(`${siteUrl}/api/search-entities?q=${encodeURIComponent(entityData.name + ' ' + queryTags)}&mode=semantic`);
+  if (searchRes.ok) {
+    const results = await searchRes.json();
+    relatedLore = results.filter((item: any) => item.id !== id).slice(0, 3);
+  }
+} catch (e) {
+  console.error('Failed to fetch related lore:', e);
+}
 ---
 
-<WikiLayout title={entityData.name}>
+<WikiLayout title={entityData.name || 'Unknown Archive Entry'}>
   <div class="entity-page">
     <div class="entity-header">
       <div class="header-main">
@@ -40,7 +59,7 @@ if (!entityData) {
         {entityData.titles && <p class="entity-titles">{entityData.titles}</p>}
         <div class="entity-tags">
           <Badge variant="accent">{entityType.toUpperCase()}</Badge>
-          {entityData.tags && entityData.tags.map((tag: string) => (
+          {tagArray.map((tag: string) => (
             <Badge variant="secondary">{tag}</Badge>
           ))}
         </div>
@@ -52,7 +71,7 @@ if (!entityData) {
         <section class="lore-section">
           <h3 class="section-title">Archives</h3>
           <div class="lore-content">
-            {entityData.loreDescription.split('\n\n').map((paragraph: string) => (
+            {(entityData.loreDescription || "No archives recorded for this entry.").split('\n\n').map((paragraph: string) => (
               <p>{paragraph}</p>
             ))}
           </div>
@@ -63,38 +82,82 @@ if (!entityData) {
             {entityData.dropTable}
           </LoreQuote>
         )}
+
+        {relatedLore.length > 0 && (
+          <section class="related-lore-section">
+            <h3 class="section-title">Related Archive Entries</h3>
+            <div class="related-grid">
+              {relatedLore.map((item: any) => (
+                <a href={`/wiki/${item.id}`} class="related-card glass-card">
+                  <span class="r-type">{item.type.toUpperCase()}</span>
+                  <h4 class="r-name">{item.name}</h4>
+                  <div class="r-relevance">Relevance: {Math.round(item.score * 100)}%</div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <aside class="meta-column">
         {entityData.imageUrl && (
           <OptimizedImage 
-            src={entityData.imageUrl} 
-            alt={entityData.name} 
+            src={entityData.imageUrl || ''} 
+            alt={entityData.name || 'Archive Image'} 
             aspectRatio="aspect-portrait" 
             class="entity-main-image"
           />
+        )}
+
+        {entityType === 'character' && (entityData.faction || entityData.status) && (
+          <div class="meta-box glass-card">
+            <h4 class="meta-title">Inhabitant Data</h4>
+            <div class="meta-info">
+              {entityData.faction && <p><strong>FACTION:</strong> {entityData.faction}</p>}
+              {entityData.status && (
+                <div class="status-indicator">
+                  <strong>RELIABILITY:</strong>
+                  <Badge variant="outline">{entityData.status.toUpperCase()}</Badge>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {entityType === 'artifact' && (
+          <div class="meta-box glass-card">
+            <h4 class="meta-title">Relic Properties</h4>
+            <div class="meta-info">
+              {entityData.rarity && <p><strong>RARITY:</strong> <span class={`rarity-${entityData.rarity.toLowerCase()}`}>{entityData.rarity.toUpperCase()}</span></p>}
+              {entityData.material && <p><strong>MATERIAL:</strong> {entityData.material}</p>}
+              {entityData.origin && <p><strong>ORIGIN:</strong> {entityData.origin}</p>}
+            </div>
+          </div>
         )}
 
         {entityType === 'mob' && entityData.baseStats && (
           <div class="meta-box glass-card">
             <h4 class="meta-title">Combat Attributes</h4>
             <div class="stats-list">
-              <StatBar label="Health" current={entityData.baseStats.hp} max={1000} />
-              <Badge variant="outline">THREAT: {entityData.threatTier?.toUpperCase()}</Badge>
+              <StatBar label="Vitality Points" current={entityData.baseStats?.hp ?? 0} max={1000} />
+              <div class="tier-box">
+                <strong>THREAT TIER:</strong>
+                <Badge variant="outline">{ (entityData.threatTier || 'unknown').toUpperCase() }</Badge>
+              </div>
             </div>
           </div>
         )}
 
         {entityType === 'location' && entityData.mapCoordinates && (
           <div class="meta-box glass-card">
-            <h4 class="meta-title">Cartography</h4>
+            <h4 class="meta-title">Territorial Cartography</h4>
             <div class="coord-info">
-              <p>X-AXIS: {entityData.mapCoordinates.x}</p>
-              <p>Y-AXIS: {entityData.mapCoordinates.y}</p>
+              <p>EASTING: {entityData.mapCoordinates.x}</p>
+              <p>NORTHING: {entityData.mapCoordinates.y}</p>
             </div>
-            <div class="map-preview-placeholder">
-              <span>Coordinate Lock Established</span>
-            </div>
+            <a href={`/world?x=${entityData.mapCoordinates.x}&y=${entityData.mapCoordinates.y}`} class="map-link">
+              <span>View on World Map</span>
+            </a>
           </div>
         )}
 
@@ -228,9 +291,9 @@ if (!entityData) {
   .location-link {
     display: block;
     padding: 0.75rem;
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(212, 175, 55, 0.1);
     color: var(--accent-primary);
-    border-radius: 6px;
+    border-radius: 2px;
     text-align: center;
     font-weight: 600;
     transition: var(--transition-smooth);
@@ -239,6 +302,52 @@ if (!entityData) {
   .location-link:hover {
     background: var(--accent-primary);
     color: white;
+  }
+
+  /* Related Lore Styles */
+  .related-lore-section {
+    margin-top: 4rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .related-card {
+    padding: 1.5rem;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .related-card:hover {
+    background: rgba(212, 175, 55, 0.05);
+    border-color: var(--accent-primary);
+    transform: translateY(-5px);
+  }
+
+  .r-type {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .r-name {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .r-relevance {
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    font-family: monospace;
+    margin-top: 0.5rem;
   }
 
   @media (max-width: 1024px) {
