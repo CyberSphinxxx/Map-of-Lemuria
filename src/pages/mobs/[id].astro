@@ -1,0 +1,235 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import ProseWrapper from '../../components/ui/ProseWrapper.astro';
+import StatBar from '../../components/ui/StatBar.astro';
+import LootTable from '../../components/ui/LootTable.astro';
+import AffinityTable from '../../components/ui/AffinityTable.astro';
+import OptimizedImage from '../../components/ui/OptimizedImage.astro';
+import Badge from '../../components/ui/Badge.astro';
+import type { MobEntity } from '../../lib/types';
+import { db } from '../../lib/firebase-admin';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/404');
+}
+
+// 1. Fetch Mob Data
+const doc = await db.collection('mobs').doc(id).get();
+
+if (!doc.exists) {
+  return Astro.redirect('/404');
+}
+
+const mob = { id: doc.id, ...doc.data() } as MobEntity;
+
+// Normalize tags
+const tagArray = typeof mob.tags === 'string' 
+  ? mob.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+  : (Array.isArray(mob.tags) ? mob.tags : []);
+
+
+// 2. Mock Loot & Affinity (Since schema only has a string 'dropTable')
+// Real implementation would parse 'mob.dropTable' or use a sub-collection
+const mockLoot = [
+  { name: 'Ancient Essence', rarity: 'Rare', rate: '5%' },
+  { name: 'Leather Scraps', rarity: 'Common', rate: '60%' },
+  { name: 'Broken Sigil', rarity: 'Uncommon', rate: '15%' },
+] as any;
+
+const mockAffinities = [
+  { element: 'Fire', multiplier: 'x1.5', type: 'weak' },
+  { element: 'Frost', multiplier: 'x0.5', type: 'resist' },
+  { element: 'Void', multiplier: 'x1.0', type: 'neutral' },
+] as any;
+
+const hp = mob.baseStats?.hp || 500;
+const mp = mob.baseStats?.mp || 100;
+const xp = mob.baseStats?.xp || 250;
+---
+
+<WikiLayout title={mob.name || 'Unknown Creature'} category="Bestiary" description={mob.loreDescription?.substring(0, 160)}>
+  <div class="mob-detail">
+    <div class="main-content">
+      <!-- Description Section -->
+      <section class="lore-section">
+        <div class="section-label">Beast Archives</div>
+        <ProseWrapper>
+          {mob.loreDescription ? (
+            mob.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
+          ) : (
+            <p>No observational records exist for this creature in the ancient archives.</p>
+          )}
+        </ProseWrapper>
+      </section>
+
+      <!-- Combat Intelligence -->
+      <section class="combat-section">
+        <div class="section-label">Element Affinities</div>
+        <AffinityTable affinities={mockAffinities} />
+      </section>
+
+      <!-- Loot Records -->
+      <section class="loot-section">
+        <div class="section-label">Drops & Materials</div>
+        <LootTable items={mockLoot} />
+        {mob.dropTable && (
+          <div class="raw-loot-note">
+            <strong>Researcher Note:</strong> {mob.dropTable}
+          </div>
+        )}
+      </section>
+    </div>
+
+    <!-- Stats & Infobox Aside -->
+    <aside class="infobox-column">
+      <div class="infobox glass-card">
+        <div class="infobox-header" data-tier={mob.threatTier}>
+          <div class="tier-indicator">{mob.threatTier || 'D'}</div>
+          <h2 class="infobox-name">{mob.name}</h2>
+          <p class="infobox-type">Class: {tagArray[0] || 'Unknown'}</p>
+        </div>
+
+        {mob.imageUrl && (
+          <div class="infobox-image">
+            <OptimizedImage src={mob.imageUrl || ''} alt={mob.name || 'Mob Image'} aspectRatio="aspect-square" />
+          </div>
+        )}
+
+        <div class="infobox-stats">
+          <div class="section-label">Vitals & Essence</div>
+          <StatBar label="Vitality Points" current={Number(hp)} max={2000} color="#ef4444" />
+          <StatBar label="Mana Reservoir" current={Number(mp)} max={500} color="#3b82f6" />
+          <StatBar label="Experience Yield" current={Number(xp)} max={1000} color="#eab308" />
+          
+          <div class="tags-row">
+            {tagArray.map((tag: string) => (
+              <Badge variant="secondary">{tag}</Badge>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</WikiLayout>
+
+<style>
+  .mob-detail {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 4rem;
+  }
+
+  .main-content .section-label:first-child {
+    margin-top: 0;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  .raw-loot-note {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border-left: 2px solid var(--accent-primary);
+  }
+
+  /* Infobox Aside */
+  .infobox-column {
+    position: sticky;
+    top: calc(var(--nav-height) + 2rem);
+  }
+
+  .infobox {
+    padding: 0;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(15, 12, 26, 0.8);
+  }
+
+  .infobox-header {
+    padding: 3rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--glass-border);
+    position: relative;
+  }
+
+  .tier-indicator {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--accent-primary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 0.9rem;
+    color: var(--accent-primary);
+    background: rgba(139, 92, 246, 0.1);
+  }
+
+  .infobox-name {
+    font-size: 2rem;
+    font-family: var(--font-display);
+    margin-bottom: 0.25rem;
+  }
+
+  .infobox-type {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+
+  .infobox-image {
+    width: 100%;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .infobox-stats {
+    padding: 2rem;
+  }
+
+  .tags-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 1100px) {
+    .mob-detail {
+      grid-template-columns: 1fr;
+    }
+    .infobox-column {
+      order: -1;
+      position: relative;
+      top: 0;
+      margin-bottom: 3rem;
+    }
+  }
+</style>
