@@ -1,0 +1,129 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import LoreCard from '../../components/ui/LoreCard.astro';
+import { db } from '../../lib/firebase-admin';
+import type { ArtifactEntity } from '../../lib/types';
+
+// Fetch all artifacts
+const snapshot = await db.collection('items').get();
+const allItems: ArtifactEntity[] = snapshot.docs.map(doc => ({
+  id: doc.id,
+  type: 'artifact',
+  ...doc.data()
+} as ArtifactEntity));
+
+// Rarity ranking
+const rarityRank: Record<string, number> = {
+  'Legendary': 0, 'Epic': 1, 'Rare': 2, 'Uncommon': 3, 'Common': 4
+};
+
+const sortedItems = [...allItems].sort((a, b) => 
+  (rarityRank[a.rarity || 'Common'] ?? 5) - (rarityRank[b.rarity || 'Common'] ?? 5)
+);
+
+---
+
+<WikiLayout title="Relics & Treasures of Lemuria" category="Artifacts">
+  <div class="items-hub">
+    <!-- Rarity Filters -->
+    <section class="rarity-filters glass-card">
+      <div class="filter-group">
+        {['Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'].map(rarity => (
+          <div class={`rarity-chip rarity-${rarity.toLowerCase()}`}>
+            <span class="dot"></span>
+            {rarity.toUpperCase()}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Items Grid -->
+    <div class="items-grid">
+      {sortedItems.length > 0 ? (
+        sortedItems.map(item => {
+          const tagArray = typeof item.tags === 'string' 
+            ? item.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : (Array.isArray(item.tags) ? item.tags.filter((t): t is string => typeof t === 'string') : [item.rarity || 'Common']);
+
+          return (
+            <LoreCard 
+              id={item.id}
+              type="artifact"
+              name={item.name || 'Lost Relic'}
+              description={item.loreDescription || 'No archives recorded in the registry.'}
+              imageUrl={item.imageUrl}
+              tags={tagArray}
+            />
+          );
+        })
+      ) : (
+        <div class="empty-state glass-card">
+          <p>The archives of material artifacts are currently vacant of legends.</p>
+          <a href="/creator-dashboard" class="btn-primary">Bind First Artifact at The Forge</a>
+        </div>
+      )}
+    </div>
+  </div>
+</WikiLayout>
+
+<style>
+  .items-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .rarity-filters {
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .rarity-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 0.5rem 1.25rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 100px;
+    color: var(--text-secondary);
+  }
+
+  .rarity-legendary { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); }
+  .rarity-epic { color: #a78bfa; border-color: rgba(167, 139, 250, 0.4); }
+  .rarity-rare { color: #60a5fa; border-color: rgba(96, 165, 250, 0.4); }
+  
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+  }
+
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+</style>
