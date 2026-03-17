@@ -1,0 +1,208 @@
+---
+import WikiLayout from '../layouts/WikiLayout.astro';
+import { Sparkles, ShieldCheck } from '@lucide/astro';
+
+const reason = Astro.url.searchParams.get('reason');
+let message = '';
+if (reason === 'unauthenticated') message = 'Entry to the Forge requires ritual authentication.';
+if (reason === 'invalid-session') message = 'Your connection to the Archives has faded. Please re-authenticate.';
+---
+
+<WikiLayout title="Archive Access">
+  <div class="login-container">
+    <div class="login-card glass-card">
+      <header class="login-header">
+        <div class="shield-icon"><ShieldCheck size={48} /></div>
+        <h2 class="glow-text">Loreweaver Protocol</h2>
+        <p class="description">Consult the ancient spirits to verify your identity.</p>
+      </header>
+
+      {message && <div class="auth-message">{message}</div>}
+
+      <div class="auth-box">
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="weaver@lemuria.realm" />
+        </div>
+        <div class="input-group">
+          <label for="password">Key</label>
+          <input type="password" id="password" placeholder="••••••••" />
+        </div>
+        
+        <button id="login-btn" class="btn-primary login-btn">
+          <Sparkles size={18} class="icon" /> Verify Identity
+        </button>
+      </div>
+
+      <div id="auth-error" class="auth-error hidden"></div>
+      
+      <footer class="login-footer">
+        <p>Access is restricted to established Chronos Scouts and Archive Guardians.</p>
+      </footer>
+    </div>
+  </div>
+</WikiLayout>
+
+<script>
+  import { auth } from '../lib/firebase-client';
+  import { signInWithEmailAndPassword } from 'firebase/auth';
+
+  const loginBtn = document.getElementById('login-btn');
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const errorEl = document.getElementById('auth-error');
+
+  loginBtn?.addEventListener('click', async () => {
+    if (!emailInput || !passwordInput || !loginBtn) return;
+
+    const email = emailInput.value;
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      showError('Please provide both email and ritual key.');
+      return;
+    }
+
+    loginBtn.innerText = 'Verifying...';
+    loginBtn.setAttribute('disabled', 'true');
+    errorEl?.classList.add('hidden');
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
+
+      // Set cookie for middleware access
+      document.cookie = `__session=${idToken}; Path=/; SameSite=Strict; Max-Age=3600; Secure`;
+
+      // Redirect to dashboard
+      window.location.href = '/creator-dashboard';
+    } catch (err: any) {
+      console.error('Auth failure:', err);
+      showError(err.message || 'The spirits rejected your credentials.');
+      loginBtn.innerText = 'Verify Identity';
+      loginBtn.removeAttribute('disabled');
+    }
+  });
+
+  function showError(msg: string) {
+    if (!errorEl) return;
+    errorEl.innerText = msg;
+    errorEl.classList.remove('hidden');
+  }
+</script>
+
+<style>
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6rem 0;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 450px;
+    padding: 3rem;
+    text-align: center;
+  }
+
+  .login-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .shield-icon {
+    color: var(--accent-primary);
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
+  }
+
+  .login-header h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .description {
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+  }
+
+  .auth-message {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    padding: 0.75rem;
+    border-radius: 8px;
+    color: var(--accent-primary);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+
+  .auth-box {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: left;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .input-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .input-group input {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    color: var(--text-primary);
+    outline: none;
+    transition: var(--transition-smooth);
+  }
+
+  .input-group input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  }
+
+  .login-btn {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .auth-error {
+    margin-top: 1.5rem;
+    color: #ef4444;
+    font-size: 0.85rem;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .login-footer {
+    margin-top: 3rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+
+  .hidden {
+    display: none;
+  }
+</style>
