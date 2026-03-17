@@ -1,0 +1,119 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import ProseWrapper from '../../components/ui/ProseWrapper.astro';
+import { db } from '../../lib/firebase-admin';
+
+// Fetch all rules/systems
+const snapshot = await db.collection('rules').get();
+const systems = snapshot.docs.map(doc => ({
+  id: doc.id,
+  ...(doc.data() as { name: string; category: string })
+}));
+
+// Fallback systems if collection is empty
+const defaultSystems = [
+  { id: 'magic', name: 'The Weave of Mana', category: 'Energy Systems' },
+  { id: 'cosmology', name: 'The Seven Planes', category: 'Existence' },
+  { id: 'timelines', name: 'The Chronos Anchor', category: 'Time & Space' },
+];
+
+const displaySystems = systems.length > 0 ? systems : defaultSystems;
+
+---
+
+<WikiLayout title="World Systems & Laws" category="Rules">
+  <div class="rules-hub">
+    <!-- Introduction Section -->
+    <section class="rules-intro">
+      <ProseWrapper>
+        <h2>Universal Principles</h2>
+        <p>
+          The realm of Lemuria operates under strict metaphysical laws discovered over eons by the ancient scholars. 
+          The archives below detail the fundamental systems that govern magic, existence, and the flow of time.
+        </p>
+      </ProseWrapper>
+    </section>
+
+    <!-- Systems Grid -->
+    <div class="rules-grid">
+      {displaySystems.map(system => (
+        <a href={`/rules/${system.id}`} class="rule-card glass-card">
+          <div class="rule-category">{system.category || 'Fundamental Law'}</div>
+          <h3 class="rule-name">{system.name}</h3>
+          <p class="rule-preview">View full technical documentation of this system.</p>
+          <div class="rule-footer">
+            <span class="read-more">Access Records →</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</WikiLayout>
+
+<style>
+  .rules-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .rule-card {
+    padding: 2.5rem;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-radius: 20px;
+  }
+
+  .rule-card:hover {
+    background: rgba(139, 92, 246, 0.05);
+    transform: translateY(-8px);
+    border-color: var(--accent-primary);
+  }
+
+  .rule-category {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+  }
+
+  .rule-name {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    font-family: var(--font-display);
+  }
+
+  .rule-preview {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .rule-footer {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .read-more {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+  }
+
+  .rule-card:hover .read-more {
+    letter-spacing: 0.05em;
+  }
+</style>
