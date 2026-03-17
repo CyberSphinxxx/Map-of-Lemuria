@@ -1,0 +1,129 @@
+---
+import Badge from './Badge.astro';
+import OptimizedImage from './OptimizedImage.astro';
+
+interface Props {
+  id: string;
+  type: 'mob' | 'character' | 'location' | 'artifact';
+  name: string;
+  description: string;
+  imageUrl?: string;
+  tags?: string[];
+  createdAt?: string;
+}
+
+const { id, type, name, description, imageUrl, tags = [], createdAt } = Astro.props;
+
+// Truncate description for the card
+const shortDesc = description.length > 120 
+  ? description.substring(0, 117) + '...' 
+  : description;
+
+const href = `/wiki/${id}`;
+---
+
+<a href={href} class="lore-card glass-card">
+  {imageUrl && (
+    <div class="card-image">
+      <OptimizedImage src={imageUrl} alt={name} aspectRatio="aspect-video" />
+      <div class="type-badge">
+        <Badge variant="accent">{type.toUpperCase()}</Badge>
+      </div>
+    </div>
+  )}
+  
+  <div class="card-content">
+    <h3 class="card-title">{name}</h3>
+    <p class="card-desc">{shortDesc}</p>
+    
+    <div class="card-footer">
+      <div class="tags">
+        {tags.slice(0, 2).map((tag: string) => (
+          <Badge variant="secondary">{tag}</Badge>
+        ))}
+      </div>
+      {createdAt && (
+        <span class="date">{new Date(createdAt).toLocaleDateString()}</span>
+      )}
+    </div>
+  </div>
+</a>
+
+<style>
+  .lore-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    overflow: hidden;
+    height: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .lore-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-primary);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px var(--accent-glow);
+  }
+
+  .card-image {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .type-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+  }
+
+  .card-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-family: var(--font-display);
+  }
+
+  .card-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex: 1;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 1rem;
+    margin-top: auto;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .lore-card:hover .card-title {
+    color: var(--accent-primary);
+  }
+</style>
