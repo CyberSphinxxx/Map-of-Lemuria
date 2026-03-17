@@ -1,12 +1,16 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 
+const env = import.meta.env || {};
+const proc = process.env || {};
+
 const pc = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || '',
+  apiKey: env['PINECONE_API_KEY'] || proc['PINECONE_API_KEY'] || '',
 });
+export const pineconeClient = pc;
 
-const INDEX_NAME = process.env.PINECONE_INDEX || 'lemuria-lore';
+const INDEX_NAME = env['PINECONE_INDEX'] || proc['PINECONE_INDEX'] || 'lemuria-lore';
 
-export const pineconeIndex = pc.index(INDEX_NAME);
+export const pineconeIndex = pc.index<any>(INDEX_NAME);
 
 /**
  * Upserts a lore chunk to Pinecone with its embedding.
@@ -44,6 +48,7 @@ export async function queryLore(vector: number[], topK: number = 5) {
   });
 
   return queryResponse.matches.map(match => ({
+    id: match.id,
     content: match.metadata?.content || '',
     title: match.metadata?.title || '',
     type: match.metadata?.type || '',
