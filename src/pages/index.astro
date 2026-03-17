@@ -1,17 +1,242 @@
 ---
+import WikiLayout from '../layouts/WikiLayout.astro';
+import LoreCard from '../components/ui/LoreCard.astro';
+import { db } from '../lib/firebase-admin';
+import { Sparkles, Hammer } from '@lucide/astro';
+
+// 1. Fetch Featured Lore (One from each major collection)
+const collections = ['mobs', 'characters', 'locations'];
+const featuredLore: any[] = [];
+
+for (const col of collections) {
+  const snapshot = await db.collection(col).limit(1).get();
+  if (!snapshot.empty) {
+    const doc = snapshot.docs[0];
+    featuredLore.push({
+      id: doc.id,
+      type: col.slice(0, -1) as any,
+      ...(doc.data() as any)
+    });
+  }
+}
+
+// 2. Fetch Recently Discovered (Latest 4 from all collections, merged in memory)
+let recentlyAdded: any[] = [];
+for (const col of collections) {
+  const snapshot = await db.collection(col).orderBy('createdAt', 'desc').limit(4).get();
+  snapshot.forEach(doc => {
+    recentlyAdded.push({
+      id: doc.id,
+      type: col.slice(0, -1) as any,
+      ...(doc.data() as any)
+    });
+  });
+}
+
+// Sort by createdAt desc and take top 4
+recentlyAdded = recentlyAdded.sort((a, b) => 
+  new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+).slice(0, 4);
 
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<WikiLayout title="Ancient Archives of Lemuria">
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-chip">EST. AGE OF AWAKENING</div>
+      <h1 class="glow-text">Map of Lemuria</h1>
+      <p class="hero-subtitle">
+        The memories of a lost world await your command. Consult the Archives, weave the lore, and rediscover the forgotten history of the realm.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="window.dispatchEvent(new CustomEvent('toggle-lorekeeper'))">
+          <Sparkles class="sparkle" size={18} /> Consult Lorekeeper
+        </button>
+        <a href="/world" class="btn-secondary">Explore World Map</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="landing-content">
+    <!-- Featured Lore Section -->
+    <section class="lore-section">
+      <div class="section-header">
+        <h2 class="section-title">Featured Lore</h2>
+        <p class="section-desc">Key pillars of the archives selected by the Lorekeeper.</p>
+      </div>
+      <div class="lore-grid">
+        {featuredLore.map(item => (
+          <LoreCard 
+            id={item.id}
+            type={item.type}
+            name={item.name}
+            description={item.loreDescription || ''}
+            imageUrl={item.imageUrl}
+            tags={item.tags}
+          />
+        ))}
+      </div>
+    </section>
+
+    <!-- Recently Discovered Section -->
+    <section class="lore-section darkened">
+      <div class="section-header">
+        <h2 class="section-title">Recently Discovered</h2>
+        <p class="section-desc">Newly unearthed records from across the regions.</p>
+      </div>
+      <div class="lore-grid">
+        {recentlyAdded.map(item => (
+          <LoreCard 
+            id={item.id}
+            type={item.type}
+            name={item.name}
+            description={item.loreDescription || ''}
+            imageUrl={item.imageUrl}
+            tags={item.tags}
+            createdAt={item.createdAt}
+          />
+        ))}
+      </div>
+    </section>
+
+    <!-- Quick Access / CTA -->
+    <section class="forge-cta glass-card">
+      <div class="cta-content">
+        <h2>Become a Loreweaver</h2>
+        <p>Your contributions shape the future of the Archives. Use the Entity Forge to record new Mobs, Characters, and Regions.</p>
+        <a href="/creator-dashboard" class="btn-primary forge-btn">Enter the Entity Forge</a>
+      </div>
+      <div class="cta-decoration"><Hammer size={120} /></div>
+    </section>
+  </div>
+</WikiLayout>
+
+<style>
+  /* Landing Specific Styles */
+  .hero {
+    padding: 6rem 0;
+    text-align: center;
+    position: relative;
+  }
+
+  .hero-chip {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 1.5rem auto 3rem;
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .sparkle {
+    margin-right: 0.5rem;
+  }
+
+  .landing-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8rem;
+    padding-bottom: 8rem;
+  }
+
+  .section-header {
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-display);
+  }
+
+  .section-desc {
+    color: var(--text-tertiary);
+    font-size: 1.1rem;
+  }
+
+  .lore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  /* Forge CTA */
+  .forge-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4rem;
+    position: relative;
+    overflow: hidden;
+    margin-top: 4rem;
+  }
+
+  .cta-content {
+    max-width: 600px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cta-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-display);
+  }
+
+  .cta-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
+
+  .cta-decoration {
+    font-size: 10rem;
+    opacity: 0.05;
+    position: absolute;
+    right: 2rem;
+    bottom: -2rem;
+    transform: rotate(-15deg);
+    pointer-events: none;
+  }
+
+  .forge-btn {
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 {
+      font-size: 3rem;
+    }
+    .hero-actions {
+      flex-direction: column;
+      align-items: center;
+    }
+    .forge-cta {
+      padding: 2.5rem;
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+</style>
