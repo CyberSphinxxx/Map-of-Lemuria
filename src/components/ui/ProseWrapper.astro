@@ -1,0 +1,62 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['prose-content', className]}>
+  <slot />
+</div>
+
+<style is:global>
+  .prose-content {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    max-width: 100%;
+  }
+
+  .prose-content p {
+    margin-bottom: 2rem;
+    text-align: justify;
+  }
+
+  .prose-content h2, .prose-content h3 {
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .prose-content blockquote {
+    border-left: 3px solid var(--accent-primary);
+    padding: 1rem 2rem;
+    background: rgba(139, 92, 246, 0.05);
+    margin: 2rem 0;
+    font-style: italic;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+  }
+
+  .prose-content strong {
+    color: var(--accent-primary);
+    font-weight: 600;
+  }
+
+  .prose-content hr {
+    border: none;
+    border-top: 1px solid var(--glass-border);
+    margin: 4rem 0;
+  }
+
+  .prose-content ul, .prose-content ol {
+    margin-bottom: 2rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose-content li {
+    margin-bottom: 0.75rem;
+  }
+</style>
