@@ -1,0 +1,65 @@
+---
+interface Affinity {
+  element: string;
+  multiplier: string;
+  type: 'weak' | 'resist' | 'neutral';
+}
+
+interface Props {
+  affinities: Affinity[];
+}
+
+const { affinities = [] } = Astro.props;
+
+const typeColors: Record<string, string> = {
+  weak: '#ef4444', // red
+  resist: '#3b82f6', // blue
+  neutral: 'var(--text-secondary)',
+};
+---
+
+<div class="affinity-grid">
+  {affinities.map(aff => (
+    <div class={`affinity-item glass-card ${aff.type}`}>
+      <span class="element-name">{aff.element}</span>
+      <span class="multiplier" style={`color: ${typeColors[aff.type]}`}>
+        {aff.multiplier}
+      </span>
+    </div>
+  ))}
+</div>
+
+<style>
+  .affinity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .affinity-item {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .affinity-item.weak { border-color: rgba(239, 68, 68, 0.3); }
+  .affinity-item.resist { border-color: rgba(59, 130, 246, 0.3); }
+
+  .element-name {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+  }
+
+  .multiplier {
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-family: monospace;
+  }
+</style>
