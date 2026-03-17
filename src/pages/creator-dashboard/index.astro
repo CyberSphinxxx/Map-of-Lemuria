@@ -1,102 +1,195 @@
 ---
 import WikiLayout from '../../layouts/WikiLayout.astro';
-import Badge from '../../components/ui/Badge.astro';
+import { Flame } from '@lucide/astro';
 ---
 
-<WikiLayout title="The Entity Forge">
+<WikiLayout title="The Arcane Forge" category="Creation">
   <div class="forge-container">
     <header class="forge-header">
-      <p class="description">Shape the reality of Lemuria. Create new mobs, characters, and locations.</p>
+      <div class="header-main-row">
+        <h1 class="glow-text">The Arcane Forge</h1>
+        <div class="header-actions">
+          <button id="logout-btn" class="btn-outline logout-btn">Seal the Archives</button>
+        </div>
+      </div>
+      <p class="description">Bind new legends to the history of Lemuria. Shape the inhabitants, relics, and territories of the realm.</p>
     </header>
 
-    <div class="forge-form-wrapper glass-card">
-      <form id="entity-form" class="forge-form">
-        <div class="form-section">
-          <label for="type">Entity Type</label>
-          <select id="type" name="type" required>
-            <option value="mob">Mob / Monster</option>
-            <option value="character">NPC / Character</option>
-            <option value="location">Location / Landmark</option>
-          </select>
-        </div>
+    <div class="forge-tabs">
+      <button class="tab-btn active" data-tab="create">Hammer & Anvil</button>
+      <button class="tab-btn" data-tab="audit">Scrutinize Records</button>
+    </div>
 
-        <div class="grid-layout">
-          <div class="form-section">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="e.g. Void Stalker" required />
-          </div>
-          <div class="form-section">
-            <label for="titles">Titles / Epithets</label>
-            <input type="text" id="titles" name="titles" placeholder="e.g. The Unseen, Scourge of Ravine" />
-          </div>
-        </div>
-
-        <div class="form-section">
-          <label for="tags">Tags (comma separated)</label>
-          <input type="text" id="tags" name="tags" placeholder="e.g. Void, Dangerous, Nocturnal" />
-        </div>
-
-        <div class="form-section">
-          <label for="loreDescription">Lore & Description</label>
-          <div class="textarea-container">
-            <textarea id="loreDescription" name="loreDescription" placeholder="Write the history and nature of this entity..." required></textarea>
-            <div id="suggestions" class="suggestions-list hidden"></div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <label for="image">Entity Image</label>
-          <input type="file" id="image" name="image" accept="image/*" class="file-input" />
-          <p class="file-hint">Images will be stored in Cloudflare R2 and served via CDN.</p>
-        </div>
-
-        <!-- Dynamic Sections -->
-        <div id="mob-fields" class="dynamic-fields">
-          <h3 class="section-title">Mob Attributes</h3>
-          <div class="grid-layout">
+    <div id="create-tab" class="tab-content">
+      <div class="forge-grid">
+        <!-- Form Column -->
+        <div class="form-column glass-card forge-form-wrapper">
+          <form id="entity-form" class="forge-form">
             <div class="form-section">
-              <label for="threatTier">Threat Tier</label>
-              <select name="threatTier">
-                <option value="harmless">Harmless</option>
-                <option value="minor">Minor Threat</option>
-                <option value="moderate">Moderate Threat</option>
-                <option value="major">Major Threat</option>
-                <option value="legendary">Legendary / Boss</option>
+              <label for="type">Legend Category</label>
+              <select id="type" name="type" required>
+                <option value="character">Notable Inhabitant</option>
+                <option value="mob">Ancient Discovery (Bestiary)</option>
+                <option value="location">Sacred Territory</option>
+                <option value="artifact">Lost Relic / Artifact</option>
               </select>
             </div>
+
             <div class="form-section">
-              <label for="hp">Base HP</label>
-              <input type="number" name="hp" placeholder="100" />
+              <label for="name">Name in Legend</label>
+              <input type="text" id="name" name="name" placeholder="e.g. Kaelen the Wise" required />
             </div>
-          </div>
-          <div class="form-section">
-            <label for="dropTable">Drop Table (Raw Text)</label>
-            <textarea name="dropTable" placeholder="e.g. 50% Void Essence, 5% Ravine Crystal"></textarea>
-          </div>
+
+            <div class="form-section">
+              <label for="titles">Titles / Epitaphs</label>
+              <input type="text" id="titles" name="titles" placeholder="e.g. Guardian of the First Flame" />
+            </div>
+
+            <div class="form-section">
+              <label for="tags">Runes & Tags (comma separated)</label>
+              <input type="text" id="tags" name="tags" placeholder="e.g. Ancient, Sacred, Void" />
+            </div>
+
+            <div class="form-section">
+              <label for="loreDescription">Chronicle of History</label>
+              <div class="textarea-container">
+                <textarea id="loreDescription" name="loreDescription" placeholder="Record the history and nature of this legend..." required></textarea>
+                <div id="suggestions" class="suggestions-list hidden"></div>
+                <button type="button" id="ai-assist-btn" class="ai-assist-btn">
+                  <Flame size={14} /> Consult the Chronicler
+                </button>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <label for="image">Visual Manifestation</label>
+              <div class="image-upload-zone">
+                <input type="file" id="image" name="image" accept="image/*" class="file-input" />
+                <div id="image-preview-container" class="image-preview-container hidden">
+                  <img id="image-preview" src="" alt="Preview" />
+                </div>
+              </div>
+              <p class="file-hint">Images are preserved in the eternal archives (Vercel Blob).</p>
+            </div>
+
+            <!-- Dynamic Sections -->
+            <div id="character-fields" class="dynamic-fields">
+              <h3 class="section-title">Inhabitant Data</h3>
+              <div class="grid-layout">
+                <div class="form-section">
+                  <label for="faction">Faction / Allegiance</label>
+                  <input type="text" name="faction" placeholder="e.g. The Iron Order" />
+                </div>
+                <div class="form-section">
+                  <label for="status">Reliability</label>
+                  <select name="status">
+                    <option value="active">Active in the Realm</option>
+                    <option value="mia">MIA / Vanished</option>
+                    <option value="deceased">Passed into Legend (Deceased)</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div id="mob-fields" class="dynamic-fields hidden">
+              <h3 class="section-title">Discovery Attributes</h3>
+              <div class="grid-layout">
+                <div class="form-section">
+                  <label for="threatTier">Threat Level</label>
+                  <select name="threatTier">
+                    <option value="D">D - Harmless / Common</option>
+                    <option value="C">C - Minor Threat</option>
+                    <option value="B">B - Dangerous / Major</option>
+                    <option value="A">A - Legendary / Elite</option>
+                    <option value="S">S - Mythic / Boss</option>
+                  </select>
+                </div>
+                <div class="form-section">
+                  <label for="hp">Vitality Points</label>
+                  <input type="number" name="hp" placeholder="100" />
+                </div>
+              </div>
+              <div class="form-section">
+                <label for="dropTable">Trophies & Spoils</label>
+                <textarea name="dropTable" placeholder="e.g. 50% Void Essence..."></textarea>
+              </div>
+            </div>
+
+            <div id="artifact-fields" class="dynamic-fields hidden">
+              <h3 class="section-title">Relic Metadata</h3>
+              <div class="grid-layout">
+                <div class="form-section">
+                  <label for="rarity">Rarity Tier</label>
+                  <select name="rarity">
+                    <option value="Common">Common</option>
+                    <option value="Uncommon">Uncommon</option>
+                    <option value="Rare">Rare</option>
+                    <option value="Epic">Epic</option>
+                    <option value="Legendary">Legendary</option>
+                  </select>
+                </div>
+                <div class="form-section">
+                  <label for="material">Essence / Material</label>
+                  <input type="text" name="material" placeholder="e.g. Meteoric Steel" />
+                </div>
+              </div>
+              <div class="form-section">
+                <label for="origin">Place of Origin</label>
+                <input type="text" name="origin" placeholder="e.g. The Crystal Peaks" />
+              </div>
+            </div>
+
+            <div id="location-fields" class="dynamic-fields hidden">
+              <h3 class="section-title">Cartographic Data</h3>
+              <div class="grid-layout">
+                <div class="form-section">
+                  <label for="coord-x">Easting</label>
+                  <input type="number" name="x" placeholder="0" />
+                </div>
+                <div class="form-section">
+                  <label for="coord-y">Northing</label>
+                  <input type="number" name="y" placeholder="0" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="submit-btn" class="submit-btn glow-hover">
+                Bind to Legend
+              </button>
+            </div>
+          </form>
+
+          <div id="status-message" class="status-message hidden"></div>
         </div>
 
-        <div id="location-fields" class="dynamic-fields hidden">
-          <h3 class="section-title">Map Data</h3>
-          <div class="grid-layout">
-            <div class="form-section">
-              <label for="coord-x">X Coordinate</label>
-              <input type="number" name="x" placeholder="0" />
-            </div>
-            <div class="form-section">
-              <label for="coord-y">Y Coordinate</label>
-              <input type="number" name="y" placeholder="0" />
+        <!-- Preview Column -->
+        <div class="preview-column">
+          <div class="sticky-preview">
+            <h4 class="preview-label">Manifestation Preview</h4>
+            <div id="live-preview-container" class="live-preview-container">
+              <!-- Rendered via JS -->
+              <div class="preview-placeholder">
+                <Flame class="placeholder-icon" />
+                <p>Begin carving the legend to see its form...</p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="form-actions">
-          <button type="submit" id="submit-btn" class="submit-btn glow-hover">
-            Forge Entity
-          </button>
+    <div id="audit-tab" class="tab-content hidden">
+      <div class="audit-container glass-card">
+        <header class="audit-header">
+          <h3>Archive Integrity Scan</h3>
+          <button id="run-audit-btn" class="btn-secondary">Unveil Anomalies</button>
+        </header>
+        <div id="audit-results" class="audit-results">
+          <p class="placeholder">Archive status: UNKNOWN. Run scan to verify records.</p>
         </div>
-      </form>
-
-      <div id="status-message" class="status-message hidden"></div>
+      </div>
     </div>
   </div>
 </WikiLayout>
@@ -104,76 +197,143 @@ import Badge from '../../components/ui/Badge.astro';
 <script>
   const form = document.getElementById('entity-form') as HTMLFormElement;
   const typeSelect = document.getElementById('type') as HTMLSelectElement;
-  const mobFields = document.getElementById('mob-fields');
-  const locationFields = document.getElementById('location-fields');
   const statusMessage = document.getElementById('status-message');
   const submitBtn = document.getElementById('submit-btn');
+  const previewContainer = document.getElementById('live-preview-container');
 
-  const textarea = document.getElementById('loreDescription') as HTMLTextAreaElement;
-  const suggestionsList = document.getElementById('suggestions');
+  // Dynamic Fields
+  const fieldGroups = {
+    character: document.getElementById('character-fields'),
+    mob: document.getElementById('mob-fields'),
+    location: document.getElementById('location-fields'),
+    artifact: document.getElementById('artifact-fields'),
+  };
 
-  textarea?.addEventListener('input', async (e) => {
-    const value = textarea.value;
-    const cursorPosition = textarea.selectionStart;
-    const textBeforeCursor = value.substring(0, cursorPosition);
-    const atMatch = textBeforeCursor.match(/@(\w*)$/);
+  // Live Preview Elements
+  const inputs = {
+    name: document.getElementById('name') as HTMLInputElement,
+    type: document.getElementById('type') as HTMLSelectElement,
+    titles: document.getElementById('titles') as HTMLInputElement,
+    tags: document.getElementById('tags-input') as HTMLInputElement,
+    desc: document.getElementById('loreDescription') as HTMLTextAreaElement,
+  };
 
-    if (atMatch && suggestionsList) {
-      const query = atMatch[1];
-      const response = await fetch(`/api/search-entities?q=${query}`);
-      const suggestions = await response.json();
+  function updatePreview() {
+    if (!previewContainer) return;
+    
+    const name = inputs.name.value || 'Unnamed Legend';
+    const type = inputs.type.value;
+    const desc = inputs.desc.value || 'The history remains unwritten...';
+    const tags = inputs.tags.value.split(',').map(t => t.trim()).filter(Boolean);
+    const imageUrl = (document.getElementById('image-preview') as HTMLImageElement).src;
 
-      if (suggestions.length > 0) {
-        suggestionsList.innerHTML = suggestions.map((s: any) => `
-          <div class="suggestion-item" data-id="${s.id}" data-name="${s.name}">
-            <span class="s-name">${s.name}</span>
-            <span class="s-type">${s.type}</span>
+    previewContainer.innerHTML = `
+      <div class="lore-card-preview parchment-card">
+        ${imageUrl && imageUrl.startsWith('data:') ? `<div class="p-image"><img src="${imageUrl}" /></div>` : '<div class="p-image-placeholder"></div>'}
+        <div class="p-content">
+          <div class="p-header">
+            <h3 class="p-name">${name}</h3>
+            <span class="p-badge">${type.toUpperCase()}</span>
           </div>
-        `).join('');
-        suggestionsList.classList.remove('hidden');
-      } else {
-        suggestionsList.classList.add('hidden');
-      }
-    } else {
-      suggestionsList?.classList.add('hidden');
+          <p class="p-desc">${desc.length > 150 ? desc.substring(0, 147) + '...' : desc}</p>
+          <div class="p-tags">
+            ${tags.slice(0, 3).map(t => `<span class="p-tag">${t}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Event Listeners for Preview
+  Object.values(inputs).forEach(input => {
+    input.addEventListener('input', updatePreview);
+  });
+
+  // Image Preview logic
+  const fileInput = document.getElementById('image') as HTMLInputElement;
+  const imgPreview = document.getElementById('image-preview') as HTMLImageElement;
+  const imgPreviewContainer = document.getElementById('image-preview-container');
+
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (imgPreview && e.target?.result) {
+          imgPreview.src = e.target.result as string;
+          imgPreviewContainer?.classList.remove('hidden');
+          updatePreview();
+        }
+      };
+      reader.readAsDataURL(file);
     }
   });
 
-  suggestionsList?.addEventListener('click', (e) => {
-    const item = (e.target as HTMLElement).closest('.suggestion-item');
-    if (item && textarea) {
-      const id = item.getAttribute('data-id');
-      const name = item.getAttribute('data-name');
-      const value = textarea.value;
-      const cursorPosition = textarea.selectionStart;
-      const textBeforeCursor = value.substring(0, cursorPosition);
-      const textAfterCursor = value.substring(cursorPosition);
+  // AI Assistance (Mock/Prompt based)
+  const aiBtn = document.getElementById('ai-assist-btn');
+  aiBtn?.addEventListener('click', async () => {
+    const desc = inputs.desc.value;
+    if (!desc) {
+      alert("Provide a spark of knowledge (some text) first.");
+      return;
+    }
+
+    aiBtn.innerHTML = '<span class="spinning">🔥</span> Consulting...';
+    aiBtn.setAttribute('disabled', 'true');
+
+    try {
+      // Small delay to simulate arcane calculation
+      await new Promise(r => setTimeout(r, 1500));
       
-      const newTextBefore = textBeforeCursor.replace(/@\w*$/, `[${name}](/wiki/${id})`);
-      textarea.value = newTextBefore + textAfterCursor;
-      suggestionsList.classList.add('hidden');
-      textarea.focus();
+      const expandedLore = desc + "\n\nKnown to those who wander the veiled paths, this entity carries a legacy that transcends time itself. The archives whisper of its significance in the Great Unbinding...";
+      inputs.desc.value = expandedLore;
+      updatePreview();
+      showMessage('The Chronicler has spoken.', 'success');
+    } catch (e) {
+      showMessage('The mists remain silent.', 'error');
+    } finally {
+      aiBtn.innerHTML = '<Flame size={14} /> Consult the Chronicler';
+      aiBtn.removeAttribute('disabled');
     }
   });
 
-  typeSelect.addEventListener('change', (e) => {
-    const type = (e.target as HTMLSelectElement).value;
-    mobFields?.classList.toggle('hidden', type !== 'mob');
-    locationFields?.classList.toggle('hidden', type !== 'location');
+  // Tab Logic
+  const tabs = document.querySelectorAll('.tab-btn');
+  const contents = document.querySelectorAll('.tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = (tab as HTMLElement).dataset.tab;
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.add('hidden'));
+      
+      tab.classList.add('active');
+      const targetEl = document.getElementById(`${target}-tab`);
+      if (targetEl) targetEl.classList.remove('hidden');
+    });
   });
 
-  form.addEventListener('submit', async (e) => {
+  // Toggle dynamic fields
+  typeSelect?.addEventListener('change', (e) => {
+    const type = (e.target as HTMLSelectElement).value;
+    Object.entries(fieldGroups).forEach(([key, el]) => {
+      el?.classList.toggle('hidden', key !== type);
+    });
+    updatePreview();
+  });
+
+  // Submit Logic
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!submitBtn) return;
 
-    submitBtn.innerText = 'Forging...';
+    submitBtn.innerText = 'Binding...';
     submitBtn.setAttribute('disabled', 'true');
     statusMessage?.classList.add('hidden');
 
     const formData = new FormData(form);
-    const type = formData.get('type');
+    const type = formData.get('type') as string;
     
-    // Construct the data payload
     const data: any = {
       type,
       name: formData.get('name'),
@@ -182,12 +342,18 @@ import Badge from '../../components/ui/Badge.astro';
       loreDescription: formData.get('loreDescription'),
     };
 
-    if (type === 'mob') {
+    // Metadata based on type
+    if (type === 'character') {
+      data.faction = formData.get('faction');
+      data.status = formData.get('status');
+    } else if (type === 'mob') {
       data.threatTier = formData.get('threatTier');
-      data.baseStats = {
-        hp: Number(formData.get('hp')) || 100
-      };
+      data.baseStats = { hp: Number(formData.get('hp')) || 100 };
       data.dropTable = formData.get('dropTable');
+    } else if (type === 'artifact') {
+      data.rarity = formData.get('rarity');
+      data.material = formData.get('material');
+      data.origin = formData.get('origin');
     } else if (type === 'location') {
       data.mapCoordinates = {
         x: Number(formData.get('x')) || 0,
@@ -195,7 +361,6 @@ import Badge from '../../components/ui/Badge.astro';
       };
     }
 
-    // Reuse FormData to send both file and data
     const finalFormData = new FormData();
     const imageFile = formData.get('image');
     if (imageFile) finalFormData.append('image', imageFile);
@@ -210,15 +375,17 @@ import Badge from '../../components/ui/Badge.astro';
       const result = await response.json();
 
       if (result.success) {
-        showMessage('Entity successfully forged into existence!', 'success');
+        showMessage('Registry success: The legend is bound to the archive.', 'success');
         form.reset();
+        imgPreviewContainer?.classList.add('hidden');
+        updatePreview();
       } else {
         throw new Error(result.error);
       }
     } catch (err: any) {
-      showMessage(`The forge failed: ${err.message}`, 'error');
+      showMessage(`The forge is cold: ${err.message}`, 'error');
     } finally {
-      submitBtn.innerText = 'Forge Entity';
+      submitBtn.innerText = 'Bind to Legend';
       submitBtn.removeAttribute('disabled');
     }
   });
@@ -229,99 +396,115 @@ import Badge from '../../components/ui/Badge.astro';
     statusMessage.className = `status-message ${type}`;
     statusMessage.classList.remove('hidden');
   }
+
+  // Logout
+  const logoutBtn = document.getElementById('logout-btn');
+  logoutBtn?.addEventListener('click', async () => {
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.href = '/login';
+  });
+  
+  // Initial Preview
+  updatePreview();
 </script>
 
 <style>
   .forge-container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
   }
 
   .forge-header {
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .header-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .forge-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 3rem;
+    align-items: start;
   }
 
   .description {
     color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 600px;
+  }
+
+  .forge-tabs {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .tab-btn.active {
+    color: var(--accent-primary);
+  }
+
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--accent-primary);
+    box-shadow: 0 0 10px var(--accent-primary);
   }
 
   .forge-form-wrapper {
     padding: 2.5rem;
+    border-radius: 2px;
   }
 
   .forge-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
   }
 
   .form-section {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
     position: relative;
-  }
-
-  .textarea-container {
-    position: relative;
-  }
-
-  .suggestions-list {
-    position: absolute;
-    bottom: calc(100% + 5px);
-    left: 0;
-    width: 100%;
-    max-height: 200px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--accent-primary);
-    border-radius: 8px;
-    overflow-y: auto;
-    z-index: 100;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  }
-
-  .suggestion-item {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    transition: var(--transition-smooth);
-  }
-
-  .suggestion-item:hover {
-    background: rgba(139, 92, 246, 0.2);
-  }
-
-  .s-name {
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .s-type {
-    font-size: 0.7rem;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-  }
-
-  .grid-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
   }
 
   label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    font-weight: 700;
   }
 
   input, select, textarea {
-    background: var(--bg-primary);
+    background: #151310;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
+    border-radius: 2px;
+    padding: 0.8rem 1.2rem;
     color: var(--text-primary);
     font-family: var(--font-main);
     font-size: 1rem;
@@ -331,77 +514,211 @@ import Badge from '../../components/ui/Badge.astro';
   input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 0 15px var(--accent-glow);
   }
 
   textarea {
-    min-height: 120px;
+    min-height: 150px;
     resize: vertical;
   }
 
-  .file-input {
-    padding: 0.5rem;
-    border-style: dashed;
-    cursor: pointer;
+  .textarea-container {
+    position: relative;
   }
 
-  .file-hint {
+  .ai-assist-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--accent-glow);
+    color: var(--accent-primary);
+    padding: 0.4rem 0.8rem;
     font-size: 0.75rem;
-    color: var(--text-tertiary);
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    transition: var(--transition-smooth);
+  }
+
+  .ai-assist-btn:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+  }
+
+  .image-upload-zone {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .image-preview-container {
+    width: 60px;
+    height: 60px;
+    border-radius: 2px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  .image-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .section-title {
-    font-size: 1.1rem;
+    font-family: var(--font-display);
+    font-size: 1rem;
     color: var(--accent-primary);
-    margin: 1.5rem 0 0.5rem 0;
+    margin: 1.5rem 0 0;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--accent-glow);
+    text-transform: uppercase;
   }
 
-  .dynamic-fields {
-    display: flex;
-    flex-direction: column;
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .hidden {
-    display: none;
-  }
-
-  .form-actions {
-    margin-top: 1rem;
   }
 
   .submit-btn {
     width: 100%;
-    padding: 1rem;
+    padding: 1.2rem;
     background: var(--accent-primary);
-    color: white;
+    color: var(--bg-primary);
     border: none;
-    border-radius: 8px;
+    border-radius: 2px;
+    font-family: var(--font-display);
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     cursor: pointer;
     transition: var(--transition-smooth);
   }
 
-  .submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  .submit-btn:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+
+  /* Preview Styles */
+  .preview-column {
+    position: sticky;
+    top: 100px;
+  }
+
+  .preview-label {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.2em;
+    text-align: center;
+  }
+
+  .live-preview-container {
+    perspective: 1000px;
+  }
+
+  .preview-placeholder {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--border-color);
+    color: var(--text-tertiary);
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .placeholder-icon {
+    opacity: 0.2;
+    width: 48px;
+    height: 48px;
+  }
+
+  /* Preview LoreCard Styles (Shared with LoreCard logic) */
+  .lore-card-preview {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .p-image-placeholder {
+    height: 180px;
+    background: linear-gradient(135deg, #1a1814, #2a251a);
+  }
+
+  .p-image img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+
+  .p-content {
+    padding: 1.5rem;
+  }
+
+  .p-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .p-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .p-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-glow);
+    border-radius: 2px;
+  }
+
+  .p-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .p-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .p-tag {
+    font-size: 0.7rem;
+    background: rgba(181, 172, 154, 0.05);
+    color: var(--text-tertiary);
+    padding: 0.2rem 0.6rem;
+    border: 1px solid rgba(181, 172, 154, 0.1);
+    border-radius: 2px;
   }
 
   .status-message {
     margin-top: 1.5rem;
     padding: 1rem;
-    border-radius: 8px;
     text-align: center;
-    font-weight: 500;
+    border-radius: 2px;
+    font-size: 0.9rem;
   }
 
   .status-message.success {
@@ -414,5 +731,23 @@ import Badge from '../../components/ui/Badge.astro';
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .hidden { display: none; }
+
+  @keyframes shimmer {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+
+  .spinning {
+    display: inline-block;
+    animation: spin 1s infinite linear;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 </style>
