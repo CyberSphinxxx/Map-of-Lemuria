@@ -1,0 +1,113 @@
+---
+
+interface LootItem {
+  name: string;
+  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
+  rate: string;
+}
+
+interface Props {
+  items: LootItem[];
+}
+
+const { items = [] } = Astro.props;
+
+const rarityColors: Record<string, string> = {
+  Common: 'var(--text-tertiary)',
+  Uncommon: '#3a5f0b', // Moss Green
+  Rare: '#1b3a4b',     // Deep Sea Blue
+  Epic: '#483d8b',     // Dark Slate Blue (Amethyst vibe)
+  Legendary: 'var(--accent-primary)', // Royal Gold
+};
+---
+
+<div class="loot-table-container">
+  {items.length > 0 ? (
+    <table class="loot-table">
+      <thead>
+        <tr>
+          <th>ITEM RECORD</th>
+          <th>RARITY</th>
+          <th>DROP RATE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map(item => (
+          <tr>
+            <td class="item-name">{item.name}</td>
+            <td>
+              <span class="rarity-indicator" style={`color: ${rarityColors[item.rarity]}`}>
+                {item.rarity.toUpperCase()}
+              </span>
+            </td>
+            <td class="rate-value">{item.rate}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    <div class="no-loot glass-card">
+      <p>This creature carries no known artifacts or materials.</p>
+    </div>
+  )}
+</div>
+
+<style>
+  .loot-table-container {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .loot-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+  }
+
+  .loot-table th {
+    text-align: left;
+    padding: 1rem;
+    color: var(--text-tertiary);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    border-bottom: 1px solid var(--glass-border);
+    text-transform: uppercase;
+  }
+
+  .loot-table td {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .item-name {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .rarity-indicator {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .rate-value {
+    font-family: monospace;
+    color: var(--text-secondary);
+  }
+
+  .no-loot {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+</style>
