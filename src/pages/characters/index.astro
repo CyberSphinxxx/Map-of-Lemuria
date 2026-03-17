@@ -1,0 +1,201 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import LoreCard from '../../components/ui/LoreCard.astro';
+import { db } from '../../lib/firebase-admin';
+import type { CharacterEntity } from '../../lib/types';
+
+// Fetch all characters
+const snapshot = await db.collection('characters').get();
+const allCharacters: CharacterEntity[] = snapshot.docs.map(doc => ({
+  id: doc.id,
+  type: 'character',
+  ...doc.data()
+} as CharacterEntity));
+
+// Unique values for filtering (logic for client-side or SSR filtering)
+const factions = [...new Set(allCharacters.map(c => c.titles || 'Independent'))];
+---
+
+<WikiLayout title="Notable Inhabitants" category="Characters">
+  <div class="characters-hub">
+    <!-- Search & Filter Bar -->
+    <section class="filter-section glass-card">
+      <div class="filter-row">
+        <div class="filter-input">
+          <label>FACTION</label>
+          <select id="faction-filter">
+            <option value="all">All Factions</option>
+            {factions.map(f => <option value={f}>{f}</option>)}
+          </select>
+        </div>
+        <div class="filter-input">
+          <label>RELIABILITY STATUS</label>
+          <select id="status-filter">
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="mia">MIA</option>
+            <option value="deceased">Deceased</option>
+          </select>
+        </div>
+        <div class="results-count">
+          <span id="active-count">{allCharacters.length}</span> RECORDED INHABITANTS
+        </div>
+      </div>
+    </section>
+
+    <!-- Character Grid -->
+    <div class="characters-grid" id="characters-grid">
+      {allCharacters.length > 0 ? (
+        allCharacters.map(char => {
+          // Process tags from string to array if necessary
+          const tagArray = typeof char.tags === 'string' 
+            ? char.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : (Array.isArray(char.tags) ? char.tags.filter((t): t is string => typeof t === 'string') : []);
+
+          return (
+            <div 
+              class="lore-card-wrapper" 
+              data-faction={(char.titles || 'Independent').toLowerCase()} 
+              data-status={(char.status || 'active').toLowerCase()}
+            >
+              <LoreCard 
+                id={char.id}
+                type="character"
+                name={char.name || 'Unknown Entity'}
+                description={char.loreDescription || 'No archives recorded in the registry.'}
+                imageUrl={char.imageUrl}
+                tags={tagArray}
+              />
+            </div>
+          );
+        })
+      ) : (
+        <div class="empty-state glass-card">
+          <p>The population archives are currently vacant of inhabitants.</p>
+          <a href="/creator-dashboard" class="btn-primary">Bind First inhabitant at The Forge</a>
+        </div>
+      )}
+    </div>
+  </div>
+</WikiLayout>
+
+<script>
+  const factionFilter = document.getElementById('faction-filter') as HTMLSelectElement;
+  const statusFilter = document.getElementById('status-filter') as HTMLSelectElement;
+  const cards = document.querySelectorAll('.lore-card-wrapper');
+  const countEl = document.getElementById('active-count');
+
+  function updateFilters() {
+    if (!factionFilter || !statusFilter) return;
+
+    const faction = factionFilter.value.toLowerCase();
+    const status = statusFilter.value.toLowerCase();
+    let visibleCount = 0;
+
+    cards.forEach((cardNode) => {
+      const card = cardNode as HTMLElement;
+      const cardFaction = (card.dataset.faction || 'independent').toLowerCase();
+      const cardStatus = (card.dataset.status || 'active').toLowerCase();
+
+      const factionMatch = faction === 'all' || cardFaction.includes(faction) || faction.includes(cardFaction);
+      const statusMatch = status === 'all' || cardStatus === status;
+
+      if (factionMatch && statusMatch) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (countEl) countEl.innerText = visibleCount.toString();
+  }
+
+  factionFilter?.addEventListener('change', updateFilters);
+  statusFilter?.addEventListener('change', updateFilters);
+</script>
+
+<style>
+  .characters-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .filter-section {
+    padding: 2rem;
+    border-radius: 16px;
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-input label {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .filter-input select {
+    background: #1a1814;
+    border: 1px solid var(--accent-glow);
+    color: var(--text-primary);
+    padding: 0.6rem 1rem;
+    border-radius: 2px;
+    font-size: 0.9rem;
+    font-family: var(--font-display);
+    outline: none;
+    min-width: 200px;
+    cursor: pointer;
+  }
+
+  .results-count {
+    margin-left: auto;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid var(--accent-glow);
+    padding: 0.6rem 1.25rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .characters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .filter-row {
+      gap: 1.5rem;
+    }
+    .results-count {
+      margin-left: 0;
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
