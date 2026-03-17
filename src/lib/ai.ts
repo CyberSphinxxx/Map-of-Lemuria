@@ -1,21 +1,43 @@
 import Groq from 'groq-sdk';
+import { pineconeClient } from './pinecone';
+
+const env = import.meta.env || {};
+const proc = process.env || {};
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: env['GROQ_API_KEY'] || proc['GROQ_API_KEY'],
 });
 
 /**
  * Generates embeddings for lore chunks.
- * TARGET MODEL: llama-text-embed-v2 (1024 dimensions)
+ * Uses Pinecone's Inference API for real-world vector generation.
+ * TARGET MODEL: multilingual-e5-large (1024 dimensions)
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // NOTE: This is a placeholder. 
-  // Integration: Use pc.inference.embeddings() with model='llama-text-embed-v2'
-  // Or use a Groq/Nomic local embedding.
-  // The vector MUST be 1024 dimensions to match the Pinecone index setup.
-  
-  console.log(`Generating embedding for: ${text.substring(0, 30)}...`);
-  return new Array(1024).fill(0).map(() => Math.random());
+  try {
+    if (!text || text.length < 2) {
+      console.warn('[AI] Text too short for embedding, returning zero vector');
+      return new Array(1024).fill(0);
+    }
+
+    const embeddings = await pineconeClient.inference.embed({
+      model: 'multilingual-e5-large',
+      inputs: [text],
+      parameters: { inputType: 'passage', truncate: 'END' }
+    });
+
+    // Pinecone returns an array-like object with .values on individual items
+    const vector = (embeddings.data?.[0] as any)?.values;
+    if (!vector || vector.length !== 1024) {
+      throw new Error(`Invalid vector dimension: expected 1024, got ${vector?.length}`);
+    }
+
+    return vector as number[];
+  } catch (error) {
+    console.error('[AI] Embedding generation failed:', error);
+    // Return a zero vector as a stable fallback instead of random noise
+    return new Array(1024).fill(0);
+  }
 }
 
 const SYSTEM_PROMPT = `
