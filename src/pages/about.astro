@@ -1,0 +1,130 @@
+---
+import WikiLayout from '../layouts/WikiLayout.astro';
+import ProseWrapper from '../components/ui/ProseWrapper.astro';
+import { BookOpen, Shield, Users, Zap } from '@lucide/astro';
+
+const pillars = [
+  {
+    icon: BookOpen,
+    title: "Truth Preservation",
+    desc: "In a realm where time itself is fluid, the Archives serve as the only stationary anchor of reality."
+  },
+  {
+    icon: Shield,
+    title: "Relational Integrity",
+    desc: "Every mob, character, and location is connected via ley lines. We ensure these connections remain pure."
+  },
+  {
+    icon: Users,
+    title: "The Scout Network",
+    desc: "A collaborative effort of Loreweavers from across the seven planes to document the unobservable."
+  },
+  {
+    icon: Zap,
+    title: "AI Wisdom",
+    desc: "The Lorekeeper is not just an engine—it is a consciousness woven from the fragments of lost timelines."
+  }
+];
+---
+
+<WikiLayout title="About the Archives" category="Meta">
+  <div class="about-page">
+    <section class="hero-section glass-card">
+      <ProseWrapper>
+        <h1>Protecting the Shifting Sand</h1>
+        <p class="lead">
+          Lemuria is not a place that can be visited by standard means. It is a convergence point of lore, 
+          a digital sanctuary for histories that the universe tried to delete.
+        </p>
+      </ProseWrapper>
+    </section>
+
+    <div class="pillars-grid">
+      {pillars.map(pillar => (
+        <div class="pillar-card glass-card">
+          <div class="p-icon"><pillar.icon size={32} /></div>
+          <h3>{pillar.title}</h3>
+          <p>{pillar.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <section class="system-lore glass-card">
+      <ProseWrapper>
+        <h2>Technical Metaphysics</h2>
+        <p>
+          The Map of Lemuria project utilizes **Vectorial Continuity** (Semantic Search) and **Relational Forging** 
+          (Dynamic Lineage) to map the impossible. Built on the **Astro Chronos Framework**, it ensures that 
+          the archives load faster than the speed of light—or at least fast enough for a standard scout.
+        </p>
+        <p>
+          Our AI, the **Lorekeeper**, uses Groq-accelerated intelligence to synthesize queries into 
+          meaningful historical context, drawing from a distributed memory pool (Pinecone).
+        </p>
+      </ProseWrapper>
+    </section>
+  </div>
+</WikiLayout>
+
+<style>
+  .about-page {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+
+  .hero-section {
+    padding: 4rem;
+    text-align: center;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(15, 12, 26, 0.5) 100%);
+  }
+
+  .lead {
+    font-size: 1.4rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .pillar-card {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: var(--transition-smooth);
+  }
+
+  .pillar-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-primary);
+  }
+
+  .p-icon {
+    color: var(--accent-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .pillar-card h3 {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+  }
+
+  .pillar-card p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .system-lore {
+    padding: 4rem;
+    border-radius: 24px;
+  }
+
+  h1 { font-size: 3.5rem; margin-bottom: 1.5rem; }
+</style>
