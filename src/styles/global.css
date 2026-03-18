@@ -1,28 +1,62 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  /* Royal Archive Palette */
-  --bg-primary: #0f0e0c;   /* Dark Onyx */
-  --bg-secondary: #1a1814; /* Deep Slate */
-  --bg-tertiary: #2a261f;  /* Weathered Stone */
-  
-  --text-primary: #e6e1d6;   /* Aged Paper */
-  --text-secondary: #b5ac9a; /* Dust */
-  --text-tertiary: #7d7565;  /* Shadow */
-  
-  --accent-primary: #d4af37;   /* Metallic Gold */
-  --accent-secondary: #996515; /* Golden Brown */
-  --accent-glow: rgba(212, 175, 55, 0.15);
-  
-  --parchment: #f4ecd8;
-  --border-color: #3d3522;
-  --glass-bg: rgba(26, 24, 20, 0.85);
-  --glass-border: rgba(212, 175, 55, 0.1);
-  
+  /* Core Tokens (Static) */
   --font-main: 'Lora', serif;
   --font-display: 'Cinzel', serif;
-  
   --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  --nav-height: 80px;
+  --sidebar-width: 300px;
+
+  /* Default Theme Tokens (Dark Archive) */
+  --theme-bg-main: #0f0e0c;
+  --theme-bg-surface: #1a1814;
+  --theme-bg-muted: #2a261f;
+  
+  --theme-text-main: #e6e1d6;
+  --theme-text-muted: #b5ac9a;
+  --theme-text-dim: #7d7565;
+  
+  --theme-accent-main: #d4af37;
+  --theme-accent-dark: #996515;
+  --theme-accent-glow: rgba(212, 175, 55, 0.15);
+  
+  --theme-border: #3d3522;
+  --theme-glass-bg: rgba(26, 24, 20, 0.85);
+  --theme-glass-border: rgba(212, 175, 55, 0.1);
+
+  /* Deprecated (mapping for backward compatibility during refactor) */
+  --bg-primary: var(--theme-bg-main);
+  --bg-secondary: var(--theme-bg-surface);
+  --bg-tertiary: var(--theme-bg-muted);
+  --text-primary: var(--theme-text-main);
+  --text-secondary: var(--theme-text-muted);
+  --text-tertiary: var(--theme-text-dim);
+  --accent-primary: var(--theme-accent-main);
+  --accent-secondary: var(--theme-accent-dark);
+  --accent-glow: var(--theme-accent-glow);
+  --border-color: var(--theme-border);
+  --glass-bg: var(--theme-glass-bg);
+  --glass-border: var(--theme-glass-border);
+}
+
+/* Light Theme (Historical Manuscript) */
+[data-theme="light"] {
+  --theme-bg-main: #fdfcf7; /* Purest Parchment */
+  --theme-bg-surface: #f4ecd8; /* Aged Parchment */
+  --theme-bg-muted: #e8dfc4; /* Weathered Manuscript */
+  
+  --theme-text-main: #2c2a24; /* Deep Iron Gall Ink */
+  --theme-text-muted: #5c584b; /* Faded Ink */
+  --theme-text-dim: #8b8471; /* Distant Shadow */
+  
+  --theme-accent-main: #996515; /* Golden Brown Wax */
+  --theme-accent-dark: #704a11;
+  --theme-accent-glow: rgba(153, 101, 21, 0.08);
+  
+  --theme-border: #d3caaf;
+  --theme-glass-bg: rgba(244, 236, 216, 0.9);
+  --theme-glass-border: rgba(153, 101, 21, 0.15);
 }
 
 * {
@@ -130,6 +164,31 @@ a {
   border-color: var(--text-tertiary);
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.02);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--theme-border);
+  color: var(--theme-text-muted);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--theme-accent-main);
+  color: var(--theme-accent-main);
+  background: var(--theme-accent-glow);
+}
+
+.hidden {
+  display: none !important;
 }
 
 /* File Input Styling */
