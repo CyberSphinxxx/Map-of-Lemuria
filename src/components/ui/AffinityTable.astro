@@ -44,22 +44,23 @@ const typeColors: Record<string, string> = {
     align-items: center;
     gap: 0.25rem;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--theme-bg-muted);
+    border: 1px solid var(--theme-glass-border);
   }
 
-  .affinity-item.weak { border-color: rgba(239, 68, 68, 0.3); }
-  .affinity-item.resist { border-color: rgba(59, 130, 246, 0.3); }
+  .affinity-item.weak { border-color: rgba(239, 68, 68, 0.4); }
+  .affinity-item.resist { border-color: rgba(59, 130, 246, 0.4); }
 
   .element-name {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--text-tertiary);
+    color: var(--theme-text-dim);
   }
 
   .multiplier {
     font-weight: 700;
     font-size: 1.1rem;
-    font-family: monospace;
+    font-family: var(--font-main);
   }
 </style>
