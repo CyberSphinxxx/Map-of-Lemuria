@@ -3,11 +3,19 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 
 const getServiceAccount = () => {
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const projectId = process.env.FIREBASE_PROJECT_ID || (import.meta as any).env?.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || (import.meta as any).env?.FIREBASE_CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY || (import.meta as any).env?.FIREBASE_PRIVATE_KEY;
 
-  if (!projectId || !clientEmail || !privateKey) return null;
+  if (!projectId || !clientEmail || !privateKey) {
+    console.error('[Firebase Admin] Missing Environment Variables:', {
+      projectId: !!projectId,
+      clientEmail: !!clientEmail,
+      privateKey: !!privateKey,
+      processEnv: Object.keys(process.env).filter(k => k.includes('FIREBASE')),
+    });
+    return null;
+  }
 
   // Robust cleaning for Vercel environment variables
   const cleanedKey = privateKey
