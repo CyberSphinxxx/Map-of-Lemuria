@@ -3,6 +3,7 @@ declare global {
   namespace App {
     interface Locals {
       user?: any;
+      languageStyle: 'fantasy' | 'standard';
     }
   }
 }
