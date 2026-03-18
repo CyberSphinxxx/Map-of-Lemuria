@@ -6,7 +6,7 @@ import type { MobEntity } from '../../lib/types';
 
 // Fetch all mobs
 const snapshot = await db.collection('mobs').get();
-const allMobs: MobEntity[] = snapshot.docs.map(doc => ({
+const allMobs: MobEntity[] = snapshot.docs.map((doc: any) => ({
   id: doc.id,
   type: 'mob',
   ...doc.data()

@@ -22,11 +22,11 @@ const region = { id: doc.id, ...doc.data() } as any;
 
 // 2. Fetch Related Mobs
 const mobsSnapshot = await db.collection('mobs').where('locationId', '==', id).get();
-const relatedMobs = mobsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+const relatedMobs = mobsSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
 
 // 3. Fetch Related Characters
 const charsSnapshot = await db.collection('characters').where('locationId', '==', id).get();
-const relatedChars = charsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+const relatedChars = charsSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
 
 const allInhabitants = [
   ...relatedMobs.map(m => ({ ...m, type: 'mob' as const } as any)),

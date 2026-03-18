@@ -26,21 +26,22 @@ const getServiceAccount = () => {
 let _db: any = null;
 let _auth: any = null;
 
+let _app: any = null;
+
 if (getApps().length === 0) {
   const serviceAccount = getServiceAccount();
   if (serviceAccount) {
-    const app = initializeApp({
+    _app = initializeApp({
       credential: cert(serviceAccount),
     });
-    _db = getFirestore(app);
-    _auth = getAuth(app);
   } else {
     console.warn('[Firebase Admin] Initialization skipped due to missing credentials.');
   }
 } else {
-  _db = getFirestore();
-  _auth = getAuth();
+  _app = getApps()[0];
 }
 
-export const db = _db;
-export const auth = _auth;
+// We export them directly; if they are used without an app, Firebase Admin usually throws a helpful error.
+// To keep the rest of the code clean, we typeset these as the actual types.
+export const db = getFirestore(_app || undefined);
+export const auth = getAuth(_app || undefined);

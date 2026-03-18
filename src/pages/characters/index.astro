@@ -6,7 +6,7 @@ import type { CharacterEntity } from '../../lib/types';
 
 // Fetch all characters
 const snapshot = await db.collection('characters').get();
-const allCharacters: CharacterEntity[] = snapshot.docs.map(doc => ({
+const allCharacters: CharacterEntity[] = snapshot.docs.map((doc: any) => ({
   id: doc.id,
   type: 'character',
   ...doc.data()

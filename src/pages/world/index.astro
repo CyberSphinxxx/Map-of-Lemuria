@@ -7,11 +7,11 @@ import MapCanvas from '../../components/MapCanvas';
 
 // Fetch all regions (locations)
 const snapshot = await db.collection('locations').get();
-const regions = snapshot.docs.map(doc => ({
+const regions = snapshot.docs.map((doc: any) => ({
   id: doc.id,
   type: 'location',
   ...doc.data()
-}));
+}) as any);
 
 ---
 
