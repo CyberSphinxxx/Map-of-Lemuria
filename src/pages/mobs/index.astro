@@ -4,13 +4,21 @@ import LoreCard from '../../components/ui/LoreCard.astro';
 import { db } from '../../lib/firebase-admin';
 import type { MobEntity } from '../../lib/types';
 
-// Fetch all mobs
-const snapshot = await db.collection('mobs').get();
-const allMobs: MobEntity[] = snapshot.docs.map((doc: any) => ({
-  id: doc.id,
-  type: 'mob',
-  ...doc.data()
-} as MobEntity));
+let allMobs: MobEntity[] = [];
+let firebaseError = false;
+
+try {
+  // Fetch all mobs
+  const snapshot = await db.collection('mobs').get();
+  allMobs = snapshot.docs.map((doc: any) => ({
+    id: doc.id,
+    type: 'mob',
+    ...doc.data()
+  } as MobEntity));
+} catch (e) {
+  console.error('[Bestiary] Failed to fetch archives:', e);
+  firebaseError = true;
+}
 
 // Sort by Threat Tier (logic: S > A > B > C > D)
 const tierOrder: Record<string, number> = { 'S': 0, 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'Unknown': 5 };

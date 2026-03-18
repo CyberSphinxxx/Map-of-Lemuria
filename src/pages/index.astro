@@ -6,37 +6,44 @@ import { Sparkles, Hammer } from '@lucide/astro';
 
 // 1. Fetch Featured Lore (One from each major collection)
 const collections = ['mobs', 'characters', 'locations'];
-const featuredLore: any[] = [];
+let featuredLore: any[] = [];
+let recentlyAdded: any[] = [];
+let firebaseError = false;
 
-for (const col of collections) {
-  const snapshot = await db.collection(col).limit(1).get();
-  if (!snapshot.empty) {
-    const doc = snapshot.docs[0];
-    featuredLore.push({
-      id: doc.id,
-      type: col.slice(0, -1) as any,
-      ...(doc.data() as any)
+try {
+  // 1. Fetch Featured Lore
+  for (const col of collections) {
+    const snapshot = await db.collection(col).limit(1).get();
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      featuredLore.push({
+        id: doc.id,
+        type: col.slice(0, -1) as any,
+        ...(doc.data() as any)
+      });
+    }
+  }
+
+  // 2. Fetch Recently Discovered
+  for (const col of collections) {
+    const snapshot = await db.collection(col).orderBy('createdAt', 'desc').limit(4).get();
+    snapshot.forEach((doc: any) => {
+      recentlyAdded.push({
+        id: doc.id,
+        type: col.slice(0, -1) as any,
+        ...(doc.data() as any)
+      });
     });
   }
-}
 
-// 2. Fetch Recently Discovered (Latest 4 from all collections, merged in memory)
-let recentlyAdded: any[] = [];
-for (const col of collections) {
-  const snapshot = await db.collection(col).orderBy('createdAt', 'desc').limit(4).get();
-  snapshot.forEach(doc => {
-    recentlyAdded.push({
-      id: doc.id,
-      type: col.slice(0, -1) as any,
-      ...(doc.data() as any)
-    });
-  });
+  // Sort by createdAt desc and take top 4
+  recentlyAdded = recentlyAdded.sort((a, b) => 
+    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  ).slice(0, 4);
+} catch (e) {
+  console.error('[Index] Failed to fetch lore from Firebase:', e);
+  firebaseError = true;
 }
-
-// Sort by createdAt desc and take top 4
-recentlyAdded = recentlyAdded.sort((a, b) => 
-  new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-).slice(0, 4);
 
 ---
 
@@ -49,6 +56,15 @@ recentlyAdded = recentlyAdded.sort((a, b) =>
       <p class="hero-subtitle">
         The memories of a lost world await your command. Consult the Archives, weave the lore, and rediscover the forgotten history of the realm.
       </p>
+      {firebaseError && (
+        <div class="connection-warning glass-card">
+          <div class="warning-text">
+            <strong>⚠️ ARCHIVES UNSTABLE</strong>
+            <span>The connection to the Lemuria Archives is currently blocked. Please verify your Vercel Environment Variables (FIREBASE_PRIVATE_KEY, etc.).</span>
+          </div>
+        </div>
+      )}
+
       <div class="hero-actions">
         <button class="btn-primary" onclick="window.dispatchEvent(new CustomEvent('toggle-lorekeeper'))">
           <Sparkles class="sparkle" size={18} /> Consult Lorekeeper
@@ -131,6 +147,36 @@ recentlyAdded = recentlyAdded.sort((a, b) =>
     font-weight: 700;
     letter-spacing: 0.1em;
     margin-bottom: 2rem;
+  }
+
+  .connection-warning {
+    margin: 2rem auto;
+    padding: 1rem 2rem;
+    max-width: 600px;
+    border: 1px dashed rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.05);
+    color: #ef4444;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 12px;
+  }
+
+  .warning-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .warning-text strong {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+  }
+
+  .warning-text span {
+    font-size: 0.9rem;
+    opacity: 0.8;
   }
 
   .hero-subtitle {

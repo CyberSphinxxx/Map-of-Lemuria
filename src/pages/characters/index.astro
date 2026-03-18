@@ -4,15 +4,23 @@ import LoreCard from '../../components/ui/LoreCard.astro';
 import { db } from '../../lib/firebase-admin';
 import type { CharacterEntity } from '../../lib/types';
 
-// Fetch all characters
-const snapshot = await db.collection('characters').get();
-const allCharacters: CharacterEntity[] = snapshot.docs.map((doc: any) => ({
-  id: doc.id,
-  type: 'character',
-  ...doc.data()
-} as CharacterEntity));
+let allCharacters: CharacterEntity[] = [];
+let firebaseError = false;
 
-// Unique values for filtering (logic for client-side or SSR filtering)
+try {
+  // Fetch all characters
+  const snapshot = await db.collection('characters').get();
+  allCharacters = snapshot.docs.map((doc: any) => ({
+    id: doc.id,
+    type: 'character',
+    ...doc.data()
+  } as CharacterEntity));
+} catch (e) {
+  console.error('[Characters] Failed to fetch archives:', e);
+  firebaseError = true;
+}
+
+// Unique values for filtering
 const factions = [...new Set(allCharacters.map(c => c.titles || 'Independent'))];
 ---
 

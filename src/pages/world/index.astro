@@ -5,13 +5,21 @@ import { db } from '../../lib/firebase-admin';
 
 import MapCanvas from '../../components/MapCanvas';
 
-// Fetch all regions (locations)
-const snapshot = await db.collection('locations').get();
-const regions = snapshot.docs.map((doc: any) => ({
-  id: doc.id,
-  type: 'location',
-  ...doc.data()
-}) as any);
+let regions: any[] = [];
+let firebaseError = false;
+
+try {
+  // Fetch all regions (locations)
+  const snapshot = await db.collection('locations').get();
+  regions = snapshot.docs.map((doc: any) => ({
+    id: doc.id,
+    type: 'location',
+    ...doc.data()
+  }) as any);
+} catch (e) {
+  console.error('[World] Failed to fetch archives:', e);
+  firebaseError = true;
+}
 
 ---
 
