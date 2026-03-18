@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getAuth, type Auth } from 'firebase-admin/auth';
 
 const getServiceAccount = () => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -38,23 +38,34 @@ const getSafeApp = () => {
   }
 };
 
-// Use Proxies to prevent module-level crashes during Vercel's early lifecycle
-export const db: any = new Proxy({} as any, {
+/**
+ * Resilient Firestore Instance.
+ * Uses a Proxy to prevent boot-time crashes on Vercel if credentials 
+ * are missing or incorrectly formatted.
+ */
+export const db: Firestore = new Proxy({} as Firestore, {
   get(target, prop) {
     const app = getSafeApp();
     if (!app) {
       throw new Error('[Firebase Admin] FIREBASE_PRIVATE_KEY or other variables are missing/invalid. Please check your Vercel Environment Variables.');
     }
-    return (getFirestore(app) as any)[prop];
+    const firestore = getFirestore(app);
+    const value = (firestore as any)[prop];
+    return typeof value === 'function' ? value.bind(firestore) : value;
   }
 });
 
-export const auth: any = new Proxy({} as any, {
+/**
+ * Resilient Auth Instance.
+ */
+export const auth: Auth = new Proxy({} as Auth, {
   get(target, prop) {
     const app = getSafeApp();
     if (!app) {
       throw new Error('[Firebase Admin] Firebase Auth not available. Missing environment variables.');
     }
-    return (getAuth(app) as any)[prop];
+    const authInstance = getAuth(app);
+    const value = (authInstance as any)[prop];
+    return typeof value === 'function' ? value.bind(authInstance) : value;
   }
 });

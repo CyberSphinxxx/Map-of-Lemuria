@@ -3,12 +3,20 @@ import WikiLayout from '../../layouts/WikiLayout.astro';
 import ProseWrapper from '../../components/ui/ProseWrapper.astro';
 import { db } from '../../lib/firebase-admin';
 
-// Fetch all rules/systems
-const snapshot = await db.collection('rules').get();
-const systems = snapshot.docs.map((doc: any) => ({
-  id: doc.id,
-  ...(doc.data() as { name: string; category: string })
-}));
+let systems: any[] = [];
+let firebaseError = false;
+
+try {
+  // Fetch all rules/systems
+  const snapshot = await db.collection('rules').get();
+  systems = snapshot.docs.map((doc: any) => ({
+    id: doc.id,
+    ...(doc.data() as { name: string; category: string })
+  }));
+} catch (e) {
+  console.error('[Rules] Failed to fetch archives:', e);
+  firebaseError = true;
+}
 
 // Fallback systems if collection is empty
 const defaultSystems = [
@@ -23,6 +31,12 @@ const displaySystems = systems.length > 0 ? systems : defaultSystems;
 
 <WikiLayout title="World Systems & Laws" category="Rules">
   <div class="rules-hub">
+    {firebaseError && (
+      <div class="connection-warning">
+        <strong>⚠️ ARCHIVES UNSTABLE</strong>
+        <span>The system archives are currently unreachable. Default protocols have been engaged.</span>
+      </div>
+    )}
     <!-- Introduction Section -->
     <section class="rules-intro">
       <ProseWrapper>

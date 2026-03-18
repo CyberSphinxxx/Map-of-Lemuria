@@ -11,26 +11,38 @@ if (!id) {
   return Astro.redirect('/404');
 }
 
-// 1. Fetch Location Data
-const doc = await db.collection('locations').doc(id).get();
+let region: any = null;
+let relatedMobs: any[] = [];
+let relatedChars: any[] = [];
+let firebaseError = false;
 
-if (!doc.exists) {
+try {
+  // 1. Fetch Location Data
+  const doc = await db.collection('locations').doc(id).get();
+
+  if (doc.exists) {
+    region = { id: doc.id, ...doc.data() } as any;
+
+    // 2. Fetch Related Mobs
+    const mobsSnapshot = await db.collection('mobs').where('locationId', '==', id).get();
+    relatedMobs = mobsSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+
+    // 3. Fetch Related Characters
+    const charsSnapshot = await db.collection('characters').where('locationId', '==', id).get();
+    relatedChars = charsSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+  }
+} catch (e) {
+  console.error('[World Detail] Failed to fetch archives:', e);
+  firebaseError = true;
+}
+
+if (!region && !firebaseError) {
   return Astro.redirect('/404');
 }
 
-const region = { id: doc.id, ...doc.data() } as any;
-
-// 2. Fetch Related Mobs
-const mobsSnapshot = await db.collection('mobs').where('locationId', '==', id).get();
-const relatedMobs = mobsSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-
-// 3. Fetch Related Characters
-const charsSnapshot = await db.collection('characters').where('locationId', '==', id).get();
-const relatedChars = charsSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-
 const allInhabitants = [
-  ...relatedMobs.map(m => ({ ...m, type: 'mob' as const } as any)),
-  ...relatedChars.map(c => ({ ...c, type: 'character' as const } as any))
+  ...relatedMobs.map((m: any) => ({ ...m, type: 'mob' as const } as any)),
+  ...relatedChars.map((c: any) => ({ ...c, type: 'character' as const } as any))
 ];
 ---
 

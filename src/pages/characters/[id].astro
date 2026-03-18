@@ -13,32 +13,44 @@ if (!id) {
   return Astro.redirect('/404');
 }
 
-// 1. Fetch Character Data
-const doc = await db.collection('characters').doc(id).get();
+let char: CharacterEntity | null = null;
+let locationName = "Unknown Region";
+let firebaseError = false;
 
-if (!doc.exists) {
+try {
+  // 1. Fetch Character Data
+  const doc = await db.collection('characters').doc(id).get();
+
+  if (doc.exists) {
+    char = { id: doc.id, ...doc.data() } as CharacterEntity;
+
+    // 2. Fetch Location Info
+    if (char.locationId) {
+      const locDoc = await db.collection('locations').doc(char.locationId).get();
+      if (locDoc.exists) {
+        locationName = locDoc.data()?.name || locationName;
+      }
+    }
+  }
+} catch (e) {
+  console.error('[Character Detail] Failed to fetch archives:', e);
+  firebaseError = true;
+}
+
+if (!char && !firebaseError) {
   return Astro.redirect('/404');
 }
 
-const char = { id: doc.id, ...doc.data() } as CharacterEntity;
+// Fallback for missing/failed data
+const displayChar = char || { name: 'Unknown Inhabitant', id: 'unknown' } as CharacterEntity;
 
 // Normalize tags
-const tagArray = typeof char.tags === 'string' 
-  ? char.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-  : (Array.isArray(char.tags) ? char.tags : []);
+const tagArray = typeof displayChar.tags === 'string' 
+  ? displayChar.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+  : (Array.isArray(displayChar.tags) ? displayChar.tags : []);
 
-
-// 2. Fetch Location Info
-let locationName = "Unknown Region";
-if (char.locationId) {
-  const locDoc = await db.collection('locations').doc(char.locationId).get();
-  if (locDoc.exists) {
-    locationName = locDoc.data()?.name || locationName;
-  }
-}
-
-// 3. Stats for Attribute Grid
-const stats = char.baseStats || {
+// Stats for Attribute Grid
+const stats = displayChar.baseStats || {
   Strength: 50,
   Agility: 50,
   Intelligence: 50,
@@ -47,15 +59,15 @@ const stats = char.baseStats || {
 };
 ---
 
-<WikiLayout title={char.name || 'Unknown Inhabitant'} category="Characters" description={char.loreDescription?.substring(0, 160)}>
+<WikiLayout title={displayChar.name || 'Unknown Inhabitant'} category="Characters" description={displayChar.loreDescription?.substring(0, 160)}>
   <div class="character-detail">
     <div class="main-content">
       <!-- Biography Section -->
       <section class="bio-section">
         <div class="section-label">Historical Records</div>
         <ProseWrapper>
-          {char.loreDescription ? (
-            char.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
+          {displayChar.loreDescription ? (
+            displayChar.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
           ) : (
             <p>The biography of this inhabitant remains unrecorded in the ancient archives.</p>
           )}
@@ -63,8 +75,8 @@ const stats = char.baseStats || {
       </section>
 
       <!-- Signature Quote -->
-      {char.titles && (
-        <LoreQuote author={char.name} source="Verbal Records">
+      {displayChar.titles && (
+        <LoreQuote author={displayChar.name} source="Verbal Records">
           "The weight of my titles is nothing compared to the weight of our history."
         </LoreQuote>
       )}
@@ -74,13 +86,13 @@ const stats = char.baseStats || {
     <aside class="infobox-column">
       <div class="infobox glass-card">
         <div class="infobox-header">
-          <h2 class="infobox-name">{char.name}</h2>
-          <p class="infobox-title">{char.titles || 'Notable Inhabitant'}</p>
+          <h2 class="infobox-name">{displayChar.name}</h2>
+          <p class="infobox-title">{displayChar.titles || 'Notable Inhabitant'}</p>
         </div>
 
-        {char.imageUrl && (
+        {displayChar.imageUrl && (
           <div class="infobox-image">
-            <OptimizedImage src={char.imageUrl || ''} alt={char.name || 'Character Image'} aspectRatio="aspect-portrait" />
+            <OptimizedImage src={displayChar.imageUrl || ''} alt={displayChar.name || 'Character Image'} aspectRatio="aspect-portrait" />
           </div>
         )}
 
@@ -96,17 +108,17 @@ const stats = char.baseStats || {
 
           <div class="info-group">
             <h4 class="info-label">Current Location</h4>
-            <a href={char.locationId ? `/world/${char.locationId}` : '#'} class="loc-link">
+            <a href={displayChar.locationId ? `/world/${displayChar.locationId}` : '#'} class="loc-link">
               {locationName}
             </a>
           </div>
 
-          {(char.faction || char.status) && (
+          {(displayChar.faction || displayChar.status) && (
             <div class="info-group">
               <h4 class="info-label">Realm Information</h4>
               <div class="meta-list">
-                {char.faction && <p class="meta-item"><strong>FACTION:</strong> {char.faction}</p>}
-                {char.status && <p class="meta-item"><strong>STATUS:</strong> {char.status.toUpperCase()}</p>}
+                {displayChar.faction && <p class="meta-item"><strong>FACTION:</strong> {displayChar.faction}</p>}
+                {displayChar.status && <p class="meta-item"><strong>STATUS:</strong> {displayChar.status.toUpperCase()}</p>}
               </div>
             </div>
           )}

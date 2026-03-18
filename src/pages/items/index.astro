@@ -4,13 +4,21 @@ import LoreCard from '../../components/ui/LoreCard.astro';
 import { db } from '../../lib/firebase-admin';
 import type { ArtifactEntity } from '../../lib/types';
 
-// Fetch all artifacts
-const snapshot = await db.collection('items').get();
-const allItems: ArtifactEntity[] = snapshot.docs.map(doc => ({
-  id: doc.id,
-  type: 'artifact',
-  ...doc.data()
-} as ArtifactEntity));
+let allItems: ArtifactEntity[] = [];
+let firebaseError = false;
+
+try {
+  // Fetch all artifacts
+  const snapshot = await db.collection('items').get();
+  allItems = snapshot.docs.map((doc: any) => ({
+    id: doc.id,
+    type: 'artifact',
+    ...doc.data()
+  } as ArtifactEntity));
+} catch (e) {
+  console.error('[Artifacts] Failed to fetch archives:', e);
+  firebaseError = true;
+}
 
 // Rarity ranking
 const rarityRank: Record<string, number> = {
@@ -25,6 +33,12 @@ const sortedItems = [...allItems].sort((a, b) =>
 
 <WikiLayout title="Relics & Treasures of Lemuria" category="Artifacts">
   <div class="items-hub">
+    {firebaseError && (
+      <div class="connection-warning">
+        <strong>⚠️ ARCHIVES UNSTABLE</strong>
+        <span>The material archives are currently unreachable. Some legends may be hidden.</span>
+      </div>
+    )}
     <!-- Rarity Filters -->
     <section class="rarity-filters glass-card">
       <div class="filter-group">

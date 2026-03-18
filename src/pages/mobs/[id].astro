@@ -15,19 +15,32 @@ if (!id) {
   return Astro.redirect('/404');
 }
 
-// 1. Fetch Mob Data
-const doc = await db.collection('mobs').doc(id).get();
+let mob: MobEntity | null = null;
+let firebaseError = false;
 
-if (!doc.exists) {
+try {
+  // 1. Fetch Mob Data
+  const doc = await db.collection('mobs').doc(id).get();
+
+  if (doc.exists) {
+    mob = { id: doc.id, ...doc.data() } as MobEntity;
+  }
+} catch (e) {
+  console.error('[Mob Detail] Failed to fetch archives:', e);
+  firebaseError = true;
+}
+
+if (!mob && !firebaseError) {
   return Astro.redirect('/404');
 }
 
-const mob = { id: doc.id, ...doc.data() } as MobEntity;
+// Fallback for missing/failed data
+const displayMob = mob || { name: 'Unknown Creature', id: 'unknown' } as MobEntity;
 
 // Normalize tags
-const tagArray = typeof mob.tags === 'string' 
-  ? mob.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-  : (Array.isArray(mob.tags) ? mob.tags : []);
+const tagArray = typeof displayMob.tags === 'string' 
+  ? displayMob.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+  : (Array.isArray(displayMob.tags) ? displayMob.tags : []);
 
 
 // 2. Mock Loot & Affinity (Since schema only has a string 'dropTable')
@@ -44,20 +57,20 @@ const mockAffinities = [
   { element: 'Void', multiplier: 'x1.0', type: 'neutral' },
 ] as any;
 
-const hp = mob.baseStats?.hp || 500;
-const mp = mob.baseStats?.mp || 100;
-const xp = mob.baseStats?.xp || 250;
+const hp = displayMob.baseStats?.hp || 500;
+const mp = displayMob.baseStats?.mp || 100;
+const xp = displayMob.baseStats?.xp || 250;
 ---
 
-<WikiLayout title={mob.name || 'Unknown Creature'} category="Bestiary" description={mob.loreDescription?.substring(0, 160)}>
+<WikiLayout title={displayMob.name || 'Unknown Creature'} category="Bestiary" description={displayMob.loreDescription?.substring(0, 160)}>
   <div class="mob-detail">
     <div class="main-content">
       <!-- Description Section -->
       <section class="lore-section">
         <div class="section-label">Beast Archives</div>
         <ProseWrapper>
-          {mob.loreDescription ? (
-            mob.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
+          {displayMob.loreDescription ? (
+            displayMob.loreDescription.split('\n\n').map((p: string) => <p>{p}</p>)
           ) : (
             <p>No observational records exist for this creature in the ancient archives.</p>
           )}
@@ -74,9 +87,9 @@ const xp = mob.baseStats?.xp || 250;
       <section class="loot-section">
         <div class="section-label">Drops & Materials</div>
         <LootTable items={mockLoot} />
-        {mob.dropTable && (
+        {displayMob.dropTable && (
           <div class="raw-loot-note">
-            <strong>Researcher Note:</strong> {mob.dropTable}
+            <strong>Researcher Note:</strong> {displayMob.dropTable}
           </div>
         )}
       </section>
@@ -85,15 +98,15 @@ const xp = mob.baseStats?.xp || 250;
     <!-- Stats & Infobox Aside -->
     <aside class="infobox-column">
       <div class="infobox glass-card">
-        <div class="infobox-header" data-tier={mob.threatTier}>
-          <div class="tier-indicator">{mob.threatTier || 'D'}</div>
-          <h2 class="infobox-name">{mob.name}</h2>
+        <div class="infobox-header" data-tier={displayMob.threatTier}>
+          <div class="tier-indicator">{displayMob.threatTier || 'D'}</div>
+          <h2 class="infobox-name">{displayMob.name}</h2>
           <p class="infobox-type">Class: {tagArray[0] || 'Unknown'}</p>
         </div>
 
-        {mob.imageUrl && (
+        {displayMob.imageUrl && (
           <div class="infobox-image">
-            <OptimizedImage src={mob.imageUrl || ''} alt={mob.name || 'Mob Image'} aspectRatio="aspect-square" />
+            <OptimizedImage src={displayMob.imageUrl || ''} alt={displayMob.name || 'Mob Image'} aspectRatio="aspect-square" />
           </div>
         )}
 

@@ -57,11 +57,9 @@ try {
         The memories of a lost world await your command. Consult the Archives, weave the lore, and rediscover the forgotten history of the realm.
       </p>
       {firebaseError && (
-        <div class="connection-warning glass-card">
-          <div class="warning-text">
-            <strong>⚠️ ARCHIVES UNSTABLE</strong>
-            <span>The connection to the Lemuria Archives is currently blocked. Please verify your Vercel Environment Variables (FIREBASE_PRIVATE_KEY, etc.).</span>
-          </div>
+        <div class="connection-warning">
+          <strong>⚠️ ARCHIVES UNSTABLE</strong>
+          <span>The connection to the Lemuria Archives is currently blocked. Please verify your Vercel Environment Variables.</span>
         </div>
       )}
 
@@ -147,36 +145,6 @@ try {
     font-weight: 700;
     letter-spacing: 0.1em;
     margin-bottom: 2rem;
-  }
-
-  .connection-warning {
-    margin: 2rem auto;
-    padding: 1rem 2rem;
-    max-width: 600px;
-    border: 1px dashed rgba(239, 68, 68, 0.5);
-    background: rgba(239, 68, 68, 0.05);
-    color: #ef4444;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    border-radius: 12px;
-  }
-
-  .warning-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .warning-text strong {
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-  }
-
-  .warning-text span {
-    font-size: 0.9rem;
-    opacity: 0.8;
   }
 
   .hero-subtitle {

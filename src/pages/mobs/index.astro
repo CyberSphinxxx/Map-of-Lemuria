@@ -31,6 +31,12 @@ const sortedMobs = [...allMobs].sort((a, b) => {
 
 <WikiLayout title="Ancient Bestiary" category="Bestiary">
   <div class="bestiary-hub">
+    {firebaseError && (
+      <div class="connection-warning">
+        <strong>⚠️ ARCHIVES UNSTABLE</strong>
+        <span>The Bestiary archives are currently unreachable. Some entries may be missing.</span>
+      </div>
+    )}
     <!-- Tier Summary Section -->
     <section class="tier-nav glass-card">
       <div class="tier-row">

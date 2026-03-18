@@ -26,6 +26,12 @@ const factions = [...new Set(allCharacters.map(c => c.titles || 'Independent'))]
 
 <WikiLayout title="Notable Inhabitants" category="Characters">
   <div class="characters-hub">
+    {firebaseError && (
+      <div class="connection-warning">
+        <strong>⚠️ ARCHIVES UNSTABLE</strong>
+        <span>The register of inhabitants is currently unreachable. Please check your connection.</span>
+      </div>
+    )}
     <!-- Search & Filter Bar -->
     <section class="filter-section glass-card">
       <div class="filter-row">

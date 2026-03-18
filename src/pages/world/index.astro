@@ -25,6 +25,12 @@ try {
 
 <WikiLayout title="Territories of the Realm" category="World">
   <div class="world-hub">
+    {firebaseError && (
+      <div class="connection-warning">
+        <strong>⚠️ ARCHIVES UNSTABLE</strong>
+        <span>The geographic archives are currently unreachable. Mapping data may be incomplete.</span>
+      </div>
+    )}
     <!-- Map Section -->
     <section class="map-section glass-card">
       <MapCanvas client:load />
