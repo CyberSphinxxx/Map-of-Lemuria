@@ -15,14 +15,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 2. Search Pinecone for context
     const matches = await queryLore(queryEmbedding, 5);
-    const contextChunks = matches.map(m => `Title: ${m.title}\nType: ${m.type}\nContent: ${m.content}`);
+    const contextChunks = matches.map((m: any) => `Title: ${m.title}\nType: ${m.type}\nContent: ${m.content}`);
 
     // 3. Get response from Groq
     const response = await getLorekeeperResponse(query, contextChunks, history || []);
 
     return new Response(JSON.stringify({ 
       response,
-      sources: matches.map(m => ({ title: m.title, type: m.type }))
+      sources: matches.map((m: any) => ({ title: m.title, type: m.type }))
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

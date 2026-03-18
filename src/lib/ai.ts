@@ -1,8 +1,38 @@
 import Groq from 'groq-sdk';
 import { pineconeClient } from './pinecone';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+/**
+ * Helper to get environment variables from both import.meta.env (Astro Local) 
+ * and process.env (Vercel Runtime).
+ */
+const getEnvVar = (key: string) => {
+  return (process.env[key] || (import.meta as any).env?.[key]) as string | undefined;
+};
+
+const getSafeGroq = () => {
+  const apiKey = getEnvVar('GROQ_API_KEY');
+  if (!apiKey) return null;
+
+  try {
+    return new Groq({ apiKey });
+  } catch (e) {
+    console.error('[AI] Groq initialization failed:', e);
+    return null;
+  }
+};
+
+/**
+ * Resilient Groq Client.
+ */
+export const groq: Groq = new Proxy({} as Groq, {
+  get(target, prop) {
+    const instance = getSafeGroq();
+    if (!instance) {
+      throw new Error('[AI] GROQ_API_KEY is missing. Please check your .env file or Vercel Environment Variables.');
+    }
+    const value = (instance as any)[prop];
+    return typeof value === 'function' ? value.bind(instance) : value;
+  }
 });
 
 /**
