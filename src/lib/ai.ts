@@ -1,11 +1,8 @@
 import Groq from 'groq-sdk';
 import { pineconeClient } from './pinecone';
 
-const env = import.meta.env || {};
-const proc = process.env || {};
-
 const groq = new Groq({
-  apiKey: env['GROQ_API_KEY'] || proc['GROQ_API_KEY'],
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 /**

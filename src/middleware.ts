@@ -12,6 +12,9 @@ export const onRequest = defineMiddleware(async ({ cookies, redirect, url, local
     }
 
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth is not initialized');
+      }
       const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
       locals.user = decodedClaims;
       return next();

@@ -1,14 +1,11 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 
-const env = import.meta.env || {};
-const proc = process.env || {};
-
 const pc = new Pinecone({
-  apiKey: env['PINECONE_API_KEY'] || proc['PINECONE_API_KEY'] || '',
+  apiKey: process.env.PINECONE_API_KEY || '',
 });
 export const pineconeClient = pc;
 
-const INDEX_NAME = env['PINECONE_INDEX'] || proc['PINECONE_INDEX'] || 'lemuria-lore';
+const INDEX_NAME = process.env.PINECONE_INDEX || 'lemuria-lore';
 
 export const pineconeIndex = pc.index<any>(INDEX_NAME);
 
